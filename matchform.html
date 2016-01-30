@@ -1,0 +1,71 @@
+<html>
+<head>
+    <title>Match Form</title>
+    <script src="http://cdn.jsdelivr.net/pouchdb/5.2.0/pouchdb.min.js"></script>
+    <script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="app.js"></script>
+</head>
+<body>
+     <h1> Match Form</h1>
+     <form id="matchForm">
+            <h2>Autonomous</h2>
+            <input type="hidden" name="_id" value="myId">
+         
+            Reached Defense: <input type="checkbox" name="autoReachD"><br>
+            Crossed Defense: <input type="checkbox" name="autoCrossD"><br>
+            Portcullis <input type="checkbox" name="autoCrossPC"><br>
+            Low Bar <input type="checkbox" name="autoCrossLB"><br>
+            Portcullis <input type="checkbox" name="autoCrossPC"><br>
+            CDF <input type="checkbox" name="autoCrossCDF"><br>
+            Sally Port <input type="checkbox" name="autoCrossSP"><br>
+            Drawbridge <input type="checkbox" name="autoCrossDB"><br>
+            Rough Terrain <input type="checkbox" name="autoCrossRT"><br>
+            Rock Wall <input type="checkbox" name="autoCrossRW"><br>
+            Moat <input type="checkbox" name="autoCrossM"><br>
+         
+            Shot Attempted: 
+            <select name="autoShotAtp">
+                <option value="none">None</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+            </select><br>
+         
+            Shot Succeeded: <input type="checkbox" name="autoShotSS"><br>
+        
+            <h2>Teleop</h2>
+            
+            High Goals Attempted: <input type="number" name="HiGAttempt" min="0" max="100" step="1" value="0"><br>
+            High Goals Attained: <input type="number" name="HiGAttain" min="0" max="100" step="1" value="0"><br>
+            Low Goals Attempted: <input type="number" name="LoAttempt" min="0" max="100" step="1" value="0"><br>
+            Low Goals Attained: <input type="number" name="LoAttain" min="0" max="100" step="1" value="0"><br>
+         
+            Number of times crossed: <br>
+            Low Bar: <input type="number" name="LBCross" min="0" max="50" step="1" value="0"><br>
+            Portcullis: <input type="number" name="PCCross" min="0" max="50" step="1" value="0"><br>
+            CDF: <input type="number" name="CDFCross" min="0" max="50" step="1" value="0"><br>
+            Sally Port: <input type="number" name="SPCross" min="0" max="50" step="1" value="0"><br>
+            Drawbridge: <input type="number" name="DBCross" min="0" max="50" step="1" value="0"><br>
+            Rough Terrain: <input type="number" name="RTCross" min="0" max="50" step="1" value="0"><br>
+            Rock Wall: <input type="number" name="RWCross" min="0" max="50" step="1" value="0"><br>
+            Moat: <input type="number" name="MCross" min="0" max="50" step="1" value="0"><br>
+         
+            Scale Attempted? <input type="checkbox" name="ScaleAttempt"><br>
+            Scale Attained? <input type="checkbox" name="ScaleAttained"><br>
+         
+            Speed: 
+            <select name="Speed">
+                <option value="Slow">Slow</option>
+                <option value="Medium">Medium</option>
+                <option value="Fast">Fast</option>
+            </select><br>
+         
+            What's broken? <input type="text" name="broken"> <br>
+            <button type="button" onclick="saveMatchForm();">Sumbit!</button>
+         
+         
+     </form> 
+
+</body>
+
+
+</html>
