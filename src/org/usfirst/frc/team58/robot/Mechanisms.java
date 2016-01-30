@@ -23,7 +23,6 @@ public class Mechanisms{
 		double collectorArmSpeed = 0;
 		double collectorWheelSpeed = 0;
 		
-		
 		boolean override = false;
 		
 		if(Joysticks.operator.getRawButton(6)){
@@ -37,10 +36,17 @@ public class Mechanisms{
 			override = false;
 		}
 		
+		//override control shooter arm
+		if(override == true){
+			
+		}
+		
+		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5) && override == true){
 			rev(1);
 		}
 		
+		//override fire boulder
 		if(Joysticks.operator.getRawButton(6) && override == true){
 			fire();
 			rev(0);
@@ -84,7 +90,5 @@ public class Mechanisms{
 	private static void fire(){
 		//sends a ball into the shooter
 	}
-	
-	
 	
 }
