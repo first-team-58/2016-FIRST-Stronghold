@@ -1,4 +1,3 @@
-
 package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -14,65 +13,55 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
-    final String defaultAuto = "Default";
+    
+	final String defaultAuto = "Default";
     final String customAuto = "My Auto";
     String autoSelected;
     SendableChooser autoChooser;
+    private static Timer timer = new Timer();
 	
-    /**
-     * This function is run when the robot is first started up and should be
-     * used for any initialization code.
-     */
+    //called on robot startup
     public void robotInit() {
-        autoChooser = new SendableChooser();
+    	autoChooser = new SendableChooser();
+    	
+        //create auto choices
         autoChooser.addDefault("nothing", 0);
-        
-        
-        autoChooser.addDefault("Default Auto", defaultAuto);
         autoChooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", autoChooser);
     }
     
-	/**
-	 * This autonomous (along with the chooser code above) shows how to select between different autonomous modes
-	 * using the dashboard. The sendable chooser code works with the Java SmartDashboard. If you prefer the LabVIEW
-	 * Dashboard, remove all of the chooser code and uncomment the getString line to get the auto name from the text box
-	 * below the Gyro
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the switch structure below with additional strings.
-	 * If using the SendableChooser make sure to add them to the chooser code above as well.
-	 */
+    //initialize autonomous and retrieve program selection from SmartDashboard
+    //you can open SmartDashboard in Eclipse: WPILib->Run SmartDashboard
+    private static int program;
     public void autonomousInit() {
-    	autoSelected = (String) autoChooser.getSelected();
-//		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
-		System.out.println("Auto selected: " + autoSelected);
-    }
-
-    /**
-     * This function is called periodically during autonomous
-     */
-    public void autonomousPeriodic() {
-    	switch(autoSelected) {
-    	case customAuto:
-        //Put custom auto code here
-            break;
-    	case defaultAuto:
-    	default:
-    	//Put default auto code here
-            break;
+    	
+    	//retrieve autonomous selection from the SmartDashboard
+    	try{
+    	program = (int) autoChooser.getSelected();
+    	} catch(Exception e){
+    		System.out.println("failed to retrieve selection");
     	}
+    	
+    	//debug the selection
+		System.out.println("Auto selected: " + autoSelected);
+		SmartDashboard.putNumber("Auto", program);
+		
+		//initialize autonomous
+		timer.start();
+		Auto.init();
     }
 
-    /**
-     * This function is called periodically during operator control
-     */
+    //called periodically during autonomous (enabled)
+    public void autonomousPeriodic() {
+    	Auto.run(program);
+    }
+
+    //called periodically during teleoperated mode (enabled)
     public void teleopPeriodic() {
         Drive.driveTeleop();
     }
     
-    /**
-     * This function is called periodically during test mode
-     */
+    //called periodically during test mode (enabled)
     public void testPeriodic() {
     
     }
