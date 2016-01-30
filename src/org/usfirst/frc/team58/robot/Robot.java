@@ -17,17 +17,20 @@ public class Robot extends IterativeRobot {
     final String defaultAuto = "Default";
     final String customAuto = "My Auto";
     String autoSelected;
-    SendableChooser chooser;
+    SendableChooser autoChooser;
 	
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
      */
     public void robotInit() {
-        chooser = new SendableChooser();
-        chooser.addDefault("Default Auto", defaultAuto);
-        chooser.addObject("My Auto", customAuto);
-        SmartDashboard.putData("Auto choices", chooser);
+        autoChooser = new SendableChooser();
+        autoChooser.addDefault("nothing", 0);
+        
+        
+        autoChooser.addDefault("Default Auto", defaultAuto);
+        autoChooser.addObject("My Auto", customAuto);
+        SmartDashboard.putData("Auto choices", autoChooser);
     }
     
 	/**
@@ -40,7 +43,7 @@ public class Robot extends IterativeRobot {
 	 * If using the SendableChooser make sure to add them to the chooser code above as well.
 	 */
     public void autonomousInit() {
-    	autoSelected = (String) chooser.getSelected();
+    	autoSelected = (String) autoChooser.getSelected();
 //		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
     }
@@ -51,7 +54,7 @@ public class Robot extends IterativeRobot {
     public void autonomousPeriodic() {
     	switch(autoSelected) {
     	case customAuto:
-        //Put custom auto code here   
+        //Put custom auto code here
             break;
     	case defaultAuto:
     	default:
@@ -64,7 +67,7 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        
+        Drive.driveTeleop();
     }
     
     /**
