@@ -5,12 +5,10 @@ import edu.wpi.first.wpilibj.Talon;
 
 public class Drive {
 	
-	private static Talon leftFront = new Talon(0);
-	private static Talon leftRear = new Talon(2);
-	private static Talon rightFront = new Talon(1);
-	private static Talon rightRear = new Talon(3);
+	private static Talon leftDrive = new Talon(0);
+	private static Talon rightDrive = new Talon(1);
 	
-	private static RobotDrive DriveBase = new RobotDrive(leftFront, leftRear, rightFront, rightRear);
+	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void init(){
 		
