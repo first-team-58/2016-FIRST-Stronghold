@@ -13,11 +13,10 @@ public class Drive {
 	private static RobotDrive DriveBase = new RobotDrive(leftFront, leftRear, rightFront, rightRear);
 	
 	public static void init(){
-		 
+		
 	}
 	
 	public static void reset(){
-		
 		
 	}
 	
@@ -26,8 +25,7 @@ public class Drive {
 		double rotateSpeed = 1;
 		double driveSpeed = 1;
 		double rotate = Joysticks.driver.getX() * -rotateSpeed;
-		double drive = Joysticks.driver.getY() * -driveSpeed;
-		
+		double drive = Joysticks.driver.getY() * driveSpeed;
 		
 		//ARCADE DRIVE MOTORS ARE AUTOMATICALLY REVERSED
 		//so don't reverse polarity on motors.
@@ -35,6 +33,8 @@ public class Drive {
 		DriveBase.arcadeDrive(drive, rotate);
 	}
 	
-	
+	public static void drive(double driveSpeed, double rotateSpeed){
+		DriveBase.arcadeDrive(driveSpeed, rotateSpeed);
+	}
 	
 }
