@@ -22,6 +22,21 @@ public class Auto{
 	
 	}
 	
+	//target a goal and fire a boulder
+	public static void target(){
+		//retrieve and sort through contours
+		//find optimal goal (largest width probably)
+		//rotate bot until target is in middle (INCLUDE ERROR)
+		//calculate distance and ideal y-position of target
+		//translate arm until y-value is reached (INCLUDE ERROR)
+		//rev shooter and fire
+	}
+	
+	//open the gate
+	public static void gateOpen(){
+		
+	}
+	
 	//sit still
 	private static void nothing(){
 		//set drive and other functions to zero
