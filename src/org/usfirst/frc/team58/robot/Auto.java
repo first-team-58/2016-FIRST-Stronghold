@@ -1,10 +1,17 @@
 package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 public class Auto{
 	
 	private static Timer time = new Timer();
+	private static NetworkTable grip;
+	private static int nObjects;
+	private static double objects[];
+	private static double midX;
+	
+	private static double[] error = {-1};
 	
 	public static void init(){
 		time.start();
@@ -30,6 +37,15 @@ public class Auto{
 		//calculate distance and ideal y-position of target
 		//translate arm until y-value is reached (INCLUDE ERROR)
 		//rev shooter and fire
+		
+		grip = NetworkTable.getTable("GRIP/tapeData");
+		objects = grip.getNumberArray("area", error);
+		nObjects = objects.length;
+		
+		if(nObjects == 1){
+			midX = grip.getDouble("centerX");
+		}
+		
 	}
 	
 	//open the gate

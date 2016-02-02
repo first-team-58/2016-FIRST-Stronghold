@@ -23,7 +23,7 @@ public class Drive {
 		double rotateSpeed = 1;
 		double driveSpeed = 1;
 		double rotate = Joysticks.driver.getX() * -rotateSpeed;
-		double drive = Joysticks.driver.getY() * driveSpeed;
+		double drive = Joysticks.driver.getY() * -driveSpeed;
 		
 		//ARCADE DRIVE MOTORS ARE AUTOMATICALLY REVERSED
 		//so don't reverse polarity on motors.

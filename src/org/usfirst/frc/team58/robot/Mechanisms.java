@@ -34,6 +34,7 @@ public class Mechanisms{
 		if(Joysticks.operator.getRawButton(9) && shooterOverride == false){
 			shooterOverride = true;
 		}
+		
 		if(Joysticks.operator.getRawButton(7)){
 			shooterOverride = false;
 		}
@@ -57,7 +58,7 @@ public class Mechanisms{
 		
 		//auto gate open
 		if(Joysticks.operator.getRawButton(5) && shooterOverride == false){
-			gateOpen();
+			Auto.gateOpen();
 		}
 		
 	}
