@@ -15,6 +15,7 @@ public class Auto{
 	private static double midX;
 	private static double midY;
 	private static int target;
+	private static double targetY;
 	private static double largestWidth;
 	
 	private static double[] error = {-1};
@@ -110,6 +111,10 @@ public class Auto{
 	//open the gate
 	public static void gateOpen(){
 		
+	}
+	
+	public static void porkulus(){
+		//open
 	}
 	
 	//sit still

@@ -20,6 +20,7 @@ public class Mechanisms{
 	private static Encoder encoderShooterRight = new Encoder(1, 1);
 	
 	private static boolean shooterOverride = false;
+	private static boolean shooterWheelRev = false;
 	
 	public static void doTeleop(){
 		double collectorArmSpeed = 0;
@@ -47,13 +48,15 @@ public class Mechanisms{
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5) && shooterOverride == true){
 			rev(1);
+			shooterWheelRev = true;
 		}
 		
 		//override fire boulder
-		if(Joysticks.operator.getRawButton(6) && shooterOverride == true){
+		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && shooterWheelRev == true){
 			fire();
 			rev(0);
 			shooterOverride = false;
+			shooterWheelRev = false;
 		}
 		
 		//auto gate open
@@ -95,6 +98,7 @@ public class Mechanisms{
 	//sends a ball into the shooter
 	public static void fire(){
 		//only fire if shooter wheels are spinning
+		shooterLoad.set(Relay.Value.kForward);
 	}
 	
 }
