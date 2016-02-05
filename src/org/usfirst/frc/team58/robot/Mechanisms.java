@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Timer;
 
 public class Mechanisms{
 	
@@ -19,8 +20,19 @@ public class Mechanisms{
 	private static Encoder encoderShooterLeft = new Encoder(0, 0);
 	private static Encoder encoderShooterRight = new Encoder(1, 1);
 	
-	private static boolean shooterOverride = false;
-	private static boolean shooterWheelRev = false;
+	private static boolean shooterOverride;
+	private static boolean shooterWheelRev;
+	private static boolean revBegun;
+	
+	private static Timer timer = new Timer();
+	private static double wheelStartTime;
+	
+	public static void init(){
+		timer.start();
+		shooterOverride = false;
+		shooterWheelRev = false;
+		revBegun = false;
+	}
 	
 	public static void doTeleop(){
 		double collectorArmSpeed = 0;
@@ -51,6 +63,10 @@ public class Mechanisms{
 			shooterWheelRev = true;
 		}
 		
+		if(!Joysticks.operator.getRawButton(5)  && shooterOverride == true && revBegun == true){
+			revBegun = false;
+		}
+		
 		//override fire boulder
 		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && shooterWheelRev == true){
 			fire();
@@ -76,18 +92,41 @@ public class Mechanisms{
 	}
 	
 	public static void rev(double shooterWheelSpeed){
-		//spin shooter wheels
-		double speedLeft = shooterWheelSpeed;
-		double speedRight = shooterWheelSpeed;
+		//if first iteration of shooter wheels hasn't happened
+		if(revBegun == false){
+			revBegun = true;
+			wheelStartTime = timer.get();
+		}
+		
+		shooterWheelRev = true;
+		
+		//ratio of wheel rates
+		double differential;
+		//setting wheel spin
 		shooterWheelLeft.set(shooterWheelSpeed);
 		shooterWheelRight.set(-shooterWheelSpeed);
 		
-		//find ratio of revolutions
-		double differential = encoderShooterLeft.getRate() / encoderShooterRight.getRate();
+		if(Math.abs(encoderShooterLeft.getRate()) > Math.abs(encoderShooterRight.getRate())){
+			//find ratio of revolutions
+			differential = encoderShooterRight.getRate() / encoderShooterLeft.getRate();
+			//set new speed adjusted to ratio
+			shooterWheelRight.set(-shooterWheelSpeed);
+			shooterWheelLeft.set(shooterWheelSpeed * differential);
+		} else if(Math.abs(encoderShooterRight.getRate()) > Math.abs(encoderShooterLeft.getRate())){
+			//find ratio of revolutions
+			differential = encoderShooterLeft.getRate() / encoderShooterRight.getRate();
+			//set new speed adjusted to ratio
+			shooterWheelLeft.set(shooterWheelSpeed);
+			shooterWheelRight.set(-shooterWheelSpeed * differential);
+		}
 		
-		//set new speed adjusted to ratio
-		shooterWheelLeft.set(shooterWheelSpeed);
-		shooterWheelRight.set(-shooterWheelSpeed * differential);
+		//check for motor stall
+		//if more than second has elapsed and encoders arent reading and a non zero wheel speed is being applied
+		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(encoderShooterRight.getRate()) < 10)  || (Math.abs(encoderShooterRight.getRate()) < 10) )){
+			shooterWheelLeft.set(0);
+			shooterWheelRight.set(0);
+		}
+		
 	}
 	
 	//move shooter arm

@@ -28,6 +28,9 @@ public class Robot extends IterativeRobot {
         autoChooser.addDefault("nothing", 0);
         autoChooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", autoChooser);
+        
+        Mechanisms.init();
+        Drive.init();
     }
     
     //initialize autonomous and retrieve program selection from SmartDashboard
@@ -68,3 +71,5 @@ public class Robot extends IterativeRobot {
     }
     
 }
+
+//386
