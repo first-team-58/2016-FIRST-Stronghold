@@ -22,14 +22,14 @@ public class Robot extends IterativeRobot {
 	
     //called on robot startup
     public void robotInit() {
-    	autoChooser = new SendableChooser();
+    	//autoChooser = new SendableChooser();
     	
         //create auto choices
-        autoChooser.addDefault("nothing", 0);
-        autoChooser.addObject("My Auto", customAuto);
-        SmartDashboard.putData("Auto choices", autoChooser);
+        //autoChooser.addDefault("nothing", 0);
+        //autoChooser.addObject("My Auto", customAuto);
+        //SmartDashboard.putData("Auto choices", autoChooser);
         
-        Mechanisms.init();
+        //Mechanisms.init();
         Drive.init();
     }
     
@@ -56,7 +56,8 @@ public class Robot extends IterativeRobot {
 
     //called periodically during autonomous (enabled)
     public void autonomousPeriodic() {
-    	Auto.run(program);
+    	//Auto.run(program);
+    	Auto.target();
     }
 
     //called periodically during teleoperated mode (enabled)

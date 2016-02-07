@@ -17,6 +17,7 @@ public class Auto{
 	private static int target;
 	private static double targetY;
 	private static double largestWidth;
+	private static double distance;
 	
 	private static double[] error = {-1};
 	
@@ -39,12 +40,22 @@ public class Auto{
 	//target a goal and fire a boulder
 	@SuppressWarnings("deprecation")
 	public static void target(){
-		//retrieve and sort through contours
-		//find optimal goal (largest width probably)
-		//rotate bot until target is in middle (INCLUDE ERROR)
-		//calculate distance and ideal y-position of target
-		//translate arm until y-value is reached (INCLUDE ERROR)
-		//rev shooter and fire
+		/*
+		retrieve and sort through contours
+		find optimal goal (largest width probably)
+		rotate bot until target is in middle (INCLUDE ERROR)
+		calculate distance and ideal y-position of target
+		translate arm until y-value is reached (INCLUDE ERROR)
+		rev shooter and fire
+		
+		robot turns to midx position
+		still trying to refine grip algorithm
+		want to detect only one contour
+		finding data points for distance vs pixel heigh of tape
+		create a line from that
+		ability to calculate distace
+		
+		*/
 		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
@@ -57,19 +68,18 @@ public class Auto{
 			System.out.println(midX);
 			
 			//align to midpoint x
-			if(midX > 61 && midX < 78){
+			if(midX >= 158 && midX <= 163){
 				//do nothing
 				Drive.drive(0, 0);
-			} else if(midX <= 61){
-				//turn left
-				Drive.drive(0, -0.25);
-			} else if(midX >= 78){
-				//turn right
+			} else if(midX < 158 && midX > 146){
 				Drive.drive(0, 0.25);
+			} else if(midX > 163 && midX < 175){
+				Drive.drive(0, -0.25);
+			} else if(midX < 146){
+				Drive.drive(0, 0.5);
+			} else if(midX > 175){
+				Drive.drive(0, -0.5);
 			}
-			
-			//align arm
-			midY = midYArray[target];
 			
 		}
 		

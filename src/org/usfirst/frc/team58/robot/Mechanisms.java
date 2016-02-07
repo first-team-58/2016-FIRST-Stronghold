@@ -121,7 +121,7 @@ public class Mechanisms{
 		}
 		
 		//check for motor stall
-		//if more than second has elapsed and encoders arent reading and a non zero wheel speed is being applied
+		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(encoderShooterRight.getRate()) < 10)  || (Math.abs(encoderShooterRight.getRate()) < 10) )){
 			shooterWheelLeft.set(0);
 			shooterWheelRight.set(0);
