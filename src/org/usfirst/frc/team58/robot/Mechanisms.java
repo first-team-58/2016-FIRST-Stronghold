@@ -60,7 +60,6 @@ public class Mechanisms{
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5) && shooterOverride == true){
 			rev(1);
-			shooterWheelRev = true;
 		}
 		
 		if(!Joysticks.operator.getRawButton(5)  && shooterOverride == true && revBegun == true){
@@ -68,11 +67,10 @@ public class Mechanisms{
 		}
 		
 		//override fire boulder
-		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && shooterWheelRev == true){
+		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && revBegun== true){
 			fire();
 			rev(0);
 			shooterOverride = false;
-			shooterWheelRev = false;
 		}
 		
 		//auto gate open
@@ -97,8 +95,10 @@ public class Mechanisms{
 			revBegun = true;
 			wheelStartTime = timer.get();
 		}
-		
-		shooterWheelRev = true;
+
+		if(shooterWheelSpeed == 0){
+			revBegun = false;
+		}
 		
 		//ratio of wheel rates
 		double differential;
@@ -125,6 +125,9 @@ public class Mechanisms{
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(encoderShooterRight.getRate()) < 10)  || (Math.abs(encoderShooterRight.getRate()) < 10) )){
 			shooterWheelLeft.set(0);
 			shooterWheelRight.set(0);
+			//kill override controls
+			shooterOverride = false;
+			//DO NOT CHANGE revBegun HERE. TIME WILL RESET AND THIS BLOCK WILL FAIL TO EXECUTE.
 		}
 		
 	}
