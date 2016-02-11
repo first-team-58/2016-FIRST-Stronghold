@@ -27,7 +27,6 @@ public class Drive {
 		
 		//ARCADE DRIVE MOTORS ARE AUTOMATICALLY REVERSED
 		//so don't reverse polarity on motors.
-		//note suggested by Steve.
 		DriveBase.arcadeDrive(drive, rotate);
 	}
 	

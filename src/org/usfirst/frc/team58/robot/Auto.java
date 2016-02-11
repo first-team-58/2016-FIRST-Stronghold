@@ -12,10 +12,13 @@ public class Auto{
 	private static double midXArray[];
 	private static double midYArray[];
 	private static double widthArray[];
+	private static double heightArray[];
 	private static double midX;
 	private static double midY;
-	private static int target;
+	private static double height;
+	private static double width;
 	private static double targetY;
+	private static int target;
 	private static double largestWidth;
 	private static double distance;
 	
@@ -37,37 +40,33 @@ public class Auto{
 	
 	}
 	
-	//target a goal and fire a boulder
 	@SuppressWarnings("deprecation")
 	public static void target(){
 		/*
+		target a goal and fire a boulder:
 		retrieve and sort through contours
 		find optimal goal (largest width probably)
-		rotate bot until target is in middle (INCLUDE ERROR)
-		calculate distance and ideal y-position of target
-		translate arm until y-value is reached (INCLUDE ERROR)
-		rev shooter and fire
-		
-		robot turns to midx position
-		still trying to refine grip algorithm
-		want to detect only one contour
-		finding data points for distance vs pixel heigh of tape
-		create a line from that
-		ability to calculate distace
-		
+		rotate robot until target is in a range
+		do so with PID rotation
+		use curve to calculate correct shooting angle given tape variable
 		*/
 		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
+		heightArray = grip.getNumberArray("height", error);
+		//midXArray = grip.
 		nObjects = midXArray.length;
 		
 		if(nObjects == 1){
 			target = 0;
 			midX = midXArray[target];
-			System.out.println(midX);
+			System.out.println("mid x: " + midX);
 			
 			//align to midpoint x
+			//PID integration for accuracy
+			//midX constants currently for GRIP image size = 1x
+			
 			if(midX >= 158 && midX <= 163){
 				//do nothing
 				Drive.drive(0, 0);
@@ -80,6 +79,13 @@ public class Auto{
 			} else if(midX > 175){
 				Drive.drive(0, -0.5);
 			}
+			
+			//align y axis
+			midY = midYArray[target];
+			
+			System.out.println("mid y: " + midY);
+			
+			//get height and map the desired midY with algorithm
 			
 		}
 		
@@ -100,21 +106,29 @@ public class Auto{
 			midX = midXArray[target];
 			System.out.println(midX);
 			
-			//align to midpoint x
-			if(midX > 61 && midX < 78){
+			if(midX >= 158 && midX <= 163){
 				//do nothing
 				Drive.drive(0, 0);
-			} else if(midX <= 61){
-				//turn left
-				Drive.drive(0, -0.25);
-			} else if(midX >= 78){
-				//turn right
+			} else if(midX < 158 && midX > 146){
 				Drive.drive(0, 0.25);
+			} else if(midX > 163 && midX < 175){
+				Drive.drive(0, -0.25);
+			} else if(midX < 146){
+				Drive.drive(0, 0.5);
+			} else if(midX > 175){
+				Drive.drive(0, -0.5);
 			}
 			
-			//align arm
-			
 		}
+		
+		if(nObjects == 0 || nObjects > 3){
+		
+		}
+		
+	}
+	
+	//open the drawbridge
+	public static void drawbridge(){
 		
 	}
 	
@@ -123,8 +137,9 @@ public class Auto{
 		
 	}
 	
+	//open the porkulus
 	public static void porkulus(){
-		//open
+		
 	}
 	
 	//sit still
