@@ -13,8 +13,8 @@ public class Mechanisms{
 	private static Talon shooterArm = new Talon(2);
 	private static Talon shooterWheelLeft = new Talon(3);
 	private static Talon shooterWheelRight = new Talon(4);
-	private static Talon duffyExtend = new Talon(5);
-	private static Talon duffyArm = new Talon(6);
+	private static Talon armExtend = new Talon(5);
+	private static Talon armArm = new Talon(6);
 	private static Talon collector = new Talon(7);
 	private static Talon intake = new Talon(8);
 	
@@ -23,18 +23,18 @@ public class Mechanisms{
 	private static Encoder encoderShooterRight = new Encoder(1, 1);
 	private static Relay shooterLoad = new Relay(0);
 	
-	//collector sensors
+	//Collector sensors
 	private static AnalogInput collectorAngle = new AnalogInput(0);
 	private static DigitalInput collectorLimitUp = new DigitalInput(0);
 	private static DigitalInput collectorLimitDown = new DigitalInput(0);
 	
-	//variables
+	//Variables
 	private static boolean shooterOverride;
 	private static double fireTime;
 	private static double collectorAimStart;
 	private static double wheelStartTime;
 	
-	//function execution booleans
+	//Function execution booleans
 	private static boolean collectorAiming;
 	private static boolean targeting;
 	private static boolean rev;
@@ -69,14 +69,30 @@ public class Mechanisms{
 			collector.set(0);
 		}
 		
+		//raise collector
+		if(Joysticks.operator.getRawButton(4)){
+			collector.set(1);
+		}
+		
+		//lower collector
+		if(Joysticks.operator.getRawButton(3)){
+			collector.set(-1);
+		}
+		
 		//collector controls
-		if(Joysticks.operator.getRawButton(2)){
+		if(Joysticks.operator.getRawButton(1)){
 			intake.set(-1);
 		}
 		
 		//move collector to collecting angle
-		if(Joysticks.operator.getRawButton(4)){
-			//this will need to be held down
+		if(Joysticks.operator.getRawButton(2)){
+			if(collectorAiming == false){
+				collectorAiming = true;
+			}
+		}
+		
+		if(collectorAiming == true){
+			
 		}
 		
 		//auto-targeting initiation
@@ -230,6 +246,22 @@ public class Mechanisms{
 	//time exclusive firing for autonomous functions
 	public static void fire(){
 		shooterLoad.set(Relay.Value.kForward);
+	}
+	
+	private static void collectorAim(){
+		//raise arm to value 2.34
+		if(collectorAngle.getAverageVoltage() > 2.3 && collectorAngle.getAverageVoltage() < 2.4){
+			collectorAiming = false;
+		}
+		
+		if(collectorAngle.getAverageVoltage() > 2.4){
+			collector.set(-0.5);
+		}
+		
+		if(collectorAngle.getAverageVoltage() < 2.3){
+			collector.set(0.5);
+		}
+		
 	}
 	
 }
