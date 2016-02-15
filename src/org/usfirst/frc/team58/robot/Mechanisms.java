@@ -41,11 +41,11 @@ public class Mechanisms{
 	private static boolean firing;
 	private static boolean defenseReady;
 	//defenses running
-	private static boolean drawbridgeRunning;
+	public static boolean drawbridgeRunning;
 	private static double drawbridgeBegin;
-	private static boolean gateRunning;
+	public static boolean gateRunning;
 	private static double gateBegin;
-	private static boolean porkulusRunning;
+	public static boolean porkulusRunning;
 	private static double porkulusBegin;
 	
 	//objects
@@ -58,6 +58,10 @@ public class Mechanisms{
 		firing = false;
 		shooterOverride = false;
 		rev = false;
+	}
+	
+	public static double getCollectorAngle(){
+		return collectorAngle.getAverageVoltage();
 	}
 	
 	public static void doTeleop(){
@@ -92,7 +96,7 @@ public class Mechanisms{
 		}
 		
 		if(collectorAiming == true){
-			
+			collectorAim();
 		}
 		
 		//auto-targeting initiation
@@ -119,7 +123,7 @@ public class Mechanisms{
 		
 		//override control shooter arm
 		if(shooterOverride == true){
-			doArmOverride();
+			doShooterOverride();
 		}
 		
 		//override run shooter wheels
@@ -152,7 +156,10 @@ public class Mechanisms{
 				drawbridgeRunning = true;
 				 drawbridgeBegin = timer.get();
 			}
-			Auto.drawbridge();
+		}
+		
+		if(drawbridgeRunning == true){
+			Auto.drawbridge(timer.get() - drawbridgeBegin);
 		}
 		
 		//open porkulus
@@ -161,7 +168,10 @@ public class Mechanisms{
 				porkulusRunning = true;
 				porkulusBegin = timer.get();
 			}
-			Auto.porkulus();
+		}
+		
+		if(porkulusRunning == true){
+			Auto.porkulus(timer.get() - porkulusBegin);
 		}
 		
 		//open gate
@@ -170,19 +180,22 @@ public class Mechanisms{
 				gateRunning = true;
 				gateBegin = timer.get();
 			}
-			Auto.gateOpen();
+		}
+		
+		if(gateRunning == true){
+			Auto.gateOpen(timer.get() - gateBegin);
 		}
 	
 	}
 	
 	//control shooter arm during override
-	private static void doArmOverride(){
+	private static void doShooterOverride(){
 		//control shooter arm via analog stick override
 		double armSpeed = Joysticks.operator.getY();
 		if(Math.abs(armSpeed) < .1){
 			armSpeed = 0;
 		}
-		doArm(armSpeed);
+		doShooter(armSpeed);
 	}
 	
 	public static void rev(double shooterWheelSpeed){
@@ -226,7 +239,7 @@ public class Mechanisms{
 	}
 	
 	//move shooter arm
-	public static void doArm(double shooterArmSpeed){
+	public static void doShooter(double shooterArmSpeed){
 		shooterArm.set(shooterArmSpeed);
 	}
 	
@@ -241,6 +254,10 @@ public class Mechanisms{
 			rev(0);
 			rev = false;
 		}
+	}
+	
+	public static void doCollector(double speed){
+		collector.set(speed);
 	}
 	
 	//time exclusive firing for autonomous functions

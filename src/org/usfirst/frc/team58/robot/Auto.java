@@ -51,6 +51,12 @@ public class Auto{
 		use curve to calculate correct shooting angle given tape variable
 		*/
 		
+		/*
+		 * if camera is switched to a 90 degree orientation:
+		 * rotation alignment uses mid-Y and aiming uses mid-X
+		 * aiming and rotation constants can be scaled by a factor of px w/h
+		 */
+		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
@@ -127,18 +133,30 @@ public class Auto{
 		
 	}
 	
-	//open the drawbridge
-	public static void drawbridge(){
+ 	//open the drawbridge
+	public static void drawbridge(double elapsedTime){
 		
 	}
 	
 	//open the gate
-	public static void gateOpen(){
+	public static void gateOpen(double elapsedTime){
 		
 	}
 	
 	//open the porkulus
-	public static void porkulus(){
+	public static void porkulus(double elapsedTime){
+		if(Mechanisms.getCollectorAngle() < 5.5){
+			Mechanisms.doCollector(0.5);
+		}
+		
+		if(Mechanisms.getCollectorAngle() >= 5.5 && elapsedTime < 10){
+			Drive.drive(0.5, 0);
+			Mechanisms.doCollector(0.5);
+		}
+		
+		if(elapsedTime > 10){
+			Mechanisms.porkulusRunning = false;
+		}
 		
 	}
 	
