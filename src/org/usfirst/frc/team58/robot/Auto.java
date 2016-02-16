@@ -143,6 +143,8 @@ public class Auto{
 		
 	}
 	
+	/*
+	
 	//open the porkulus
 	public static void porkulus(double elapsedTime){
 		if(Mechanisms.getCollectorAngle() < 5.5){
@@ -159,7 +161,7 @@ public class Auto{
 		}
 		
 	}
-	
+	*/
 	//sit still
 	private static void nothing(){
 		//set drive and other functions to zero

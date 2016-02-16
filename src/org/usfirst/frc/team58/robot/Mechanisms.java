@@ -9,6 +9,12 @@ import edu.wpi.first.wpilibj.Timer;
 
 public class Mechanisms{
 	
+	public static double shooterArmSpeed;
+	public static double collectorSpeed;
+	public static int feederSpeed;
+	public static int intakeSpeed;
+	public static double wheelSpeed;
+	
 	//Talons
 	private static Talon shooterArm = new Talon(2);
 	private static Talon shooterWheelLeft = new Talon(3);
@@ -16,21 +22,21 @@ public class Mechanisms{
 	private static Talon armExtend = new Talon(5);
 	private static Talon armArm = new Talon(6);
 	private static Talon collector = new Talon(7);
-	private static Talon intake = new Talon(8);
 	
 	//shooter sensors
-	private static Encoder encoderShooterLeft = new Encoder(0, 0);
-	private static Encoder encoderShooterRight = new Encoder(1, 1);
-	private static Relay shooterLoad = new Relay(0);
+	//private static Encoder encoderShooterLeft = new Encoder(0, 1);
+	//private static Encoder encoderShooterRight = new Encoder(2, 3);
+	private static Relay feeder = new Relay(1);
+	private static Relay intake = new Relay(0);
 	
 	//Collector sensors
 	private static AnalogInput collectorAngle = new AnalogInput(0);
-	private static DigitalInput collectorLimitUp = new DigitalInput(0);
-	private static DigitalInput collectorLimitDown = new DigitalInput(0);
+	private static AnalogInput shooterAngle = new AnalogInput(1);
+	private static DigitalInput ballStop = new DigitalInput(6);
 	
 	//Variables
 	private static boolean shooterOverride;
-	private static double fireTime;
+	public static double fireTime;
 	private static double collectorAimStart;
 	private static double wheelStartTime;
 	
@@ -60,6 +66,7 @@ public class Mechanisms{
 		rev = false;
 	}
 	
+	
 	public static double getCollectorAngle(){
 		return collectorAngle.getAverageVoltage();
 	}
@@ -67,25 +74,27 @@ public class Mechanisms{
 	public static void doTeleop(){
 		double collectorArmSpeed = 0;
 		double collectorWheelSpeed = 0;
+		shooterArmSpeed = 0;
+		collectorSpeed = 0;
+		wheelSpeed = 0;
+		feederSpeed = 1;
+		intakeSpeed = 1;
 		
-		//check for limits
-		if(collectorLimitUp.get() == true || collectorLimitDown.get() == true){
-			collector.set(0);
-		}
+		System.out.println("colector" + collectorAngle.getVoltage());
+		System.out.println("shooter" + shooterAngle.getAverageVoltage());
 		
 		//raise collector
 		if(Joysticks.operator.getRawButton(4)){
-			collector.set(1);
-		}
-		
-		//lower collector
-		if(Joysticks.operator.getRawButton(3)){
-			collector.set(-1);
+			collectorSpeed = 0.5;
+		} else if(Joysticks.operator.getRawButton(3)){
+			collectorSpeed = -0.5;
 		}
 		
 		//collector controls
 		if(Joysticks.operator.getRawButton(1)){
-			intake.set(-1);
+			intakeSpeed = 2;
+			feederSpeed = 2;
+			wheelSpeed = -0.35;
 		}
 		
 		//move collector to collecting angle
@@ -97,7 +106,7 @@ public class Mechanisms{
 		
 		if(collectorAiming == true){
 			collectorAim();
-		}
+		}		
 		
 		//auto-targeting initiation
 		if(Joysticks.operator.getRawButton(6) && shooterOverride == false){
@@ -109,7 +118,7 @@ public class Mechanisms{
 		
 		//run target function
 		if(targeting == true){
-			Auto.target();
+			//Auto.target();
 		}
 		
 		//override shooter controls
@@ -128,7 +137,7 @@ public class Mechanisms{
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5) && shooterOverride == true){
-			rev(1);
+			wheelSpeed = 1;
 		} //do not put an else block here
 		
 		//stop rev if button not pressed only during shooter override
@@ -138,16 +147,19 @@ public class Mechanisms{
 		
 		//override fire boulder
 		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && rev == true){
-			if(firing == false){
+			feederSpeed = 0;
+			
+			/*if(firing == false){
 				fireTime = timer.get();
 				firing = true;
-			}
+			}*/
 		}
 		
 		if(firing == true){
-			fire();
+			fireOverride();
 		}
 		
+		/*
 		//driver defense controls
 		
 		//open drawbridge
@@ -185,7 +197,35 @@ public class Mechanisms{
 		if(gateRunning == true){
 			Auto.gateOpen(timer.get() - gateBegin);
 		}
-	
+		
+		*/
+		
+		//if the back ball limit is pressed, stop the feeder
+		if(ballStop.get() == true && feederSpeed == 2){
+			feederSpeed = 1;
+		}
+		
+		//set all motors
+		shooterArm.set(shooterArmSpeed);
+		collector.set(collectorSpeed);
+		rev(wheelSpeed);
+		
+		if(intakeSpeed == 0){
+			intake.set(Relay.Value.kReverse);
+		} else if(intakeSpeed == 1){
+			intake.set(Relay.Value.kOff);
+		} else if(intakeSpeed == 2){
+			intake.set(Relay.Value.kForward);
+		}
+		
+		if(feederSpeed == 0){
+			feeder.set(Relay.Value.kForward);
+		} else if(feederSpeed == 1){
+			feeder.set(Relay.Value.kOff);
+		} else if(feederSpeed == 2){
+			feeder.set(Relay.Value.kReverse);
+		}
+		
 	}
 	
 	//control shooter arm during override
@@ -195,8 +235,10 @@ public class Mechanisms{
 		if(Math.abs(armSpeed) < .1){
 			armSpeed = 0;
 		}
-		doShooter(armSpeed);
+		shooterArmSpeed = armSpeed;
 	}
+	
+	
 	
 	public static void rev(double shooterWheelSpeed){
 		if(rev == false){
@@ -210,8 +252,9 @@ public class Mechanisms{
 		
 		//setting wheel speeds
 		shooterWheelLeft.set(shooterWheelSpeed);
-		shooterWheelRight.set(-shooterWheelSpeed);
+		shooterWheelRight.set(shooterWheelSpeed);
 		
+		/*
 		if(Math.abs(encoderShooterLeft.getRate()) > Math.abs(encoderShooterRight.getRate())){
 			//find ratio of revolutions
 			differential = encoderShooterRight.getRate() / encoderShooterLeft.getRate();
@@ -235,7 +278,7 @@ public class Mechanisms{
 			//kill override controls
 			shooterOverride = false;
 		}
-		
+		*/
 	}
 	
 	//move shooter arm
@@ -243,17 +286,24 @@ public class Mechanisms{
 		shooterArm.set(shooterArmSpeed);
 	}
 	
+	
 	//sends a ball into the shooter
 	private static void fireOverride(){
+		
+		System.out.println(fireTime);
+		
 		if((timer.get() - fireTime) < 1){
-			shooterLoad.set(Relay.Value.kForward);
+			feederSpeed = 0;
 		} else {
 			//stop all override controls
+			feederSpeed = 1;
 			shooterOverride = false;
 			firing = false;
 			rev(0);
 			rev = false;
+			
 		}
+		
 	}
 	
 	public static void doCollector(double speed){
@@ -262,20 +312,20 @@ public class Mechanisms{
 	
 	//time exclusive firing for autonomous functions
 	public static void fire(){
-		shooterLoad.set(Relay.Value.kForward);
+		//feederSpeed = 2;
 	}
 	
 	private static void collectorAim(){
 		//raise arm to value 2.34
-		if(collectorAngle.getAverageVoltage() > 2.3 && collectorAngle.getAverageVoltage() < 2.4){
+		if(collectorAngle.getAverageVoltage() > 1.3 && collectorAngle.getAverageVoltage() < 1.4){
 			collectorAiming = false;
 		}
 		
-		if(collectorAngle.getAverageVoltage() > 2.4){
+		if(collectorAngle.getAverageVoltage() > 1.4){
 			collector.set(-0.5);
 		}
 		
-		if(collectorAngle.getAverageVoltage() < 2.3){
+		if(collectorAngle.getAverageVoltage() < 1.3){
 			collector.set(0.5);
 		}
 		

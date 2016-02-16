@@ -51,7 +51,7 @@ public class Robot extends IterativeRobot {
 		
 		//initialize autonomous
 		timer.start();
-		Auto.init();
+		//Auto.init();
     }
 
     //called periodically during autonomous (enabled)
@@ -63,7 +63,7 @@ public class Robot extends IterativeRobot {
     //called periodically during teleoperated mode (enabled)
     public void teleopPeriodic() {
         Drive.driveTeleop();
-        //Mechanisms.doTeleop();
+        Mechanisms.doTeleop();
     }
     
     //called periodically during test mode (enabled)
