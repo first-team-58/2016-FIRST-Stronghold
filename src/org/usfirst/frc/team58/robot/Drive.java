@@ -8,10 +8,14 @@ public class Drive {
 	private static Talon leftDrive = new Talon(0);
 	private static Talon rightDrive = new Talon(1);
 	
+	private static double driveSpeed;
+	private static double rotateSpeed;
+	
+	public static boolean frontFacing;
+	
 	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void init(){
-		
 	}
 	
 	public static void reset(){
@@ -19,15 +23,27 @@ public class Drive {
 	}
 	
 	public static void driveTeleop(){
+		/*
+		if(frontFacing == true){
+			double rotate = Joysticks.driver.getX() * -1;
+			double drive = Joysticks.driver.getY() * -1;
+			DriveBase.arcadeDrive(drive, rotate);
+		} else {
+			double rotate = Joysticks.driver.getX() * 1;
+			double drive = Joysticks.driver.getY() * 1;
+			DriveBase.arcadeDrive(drive, rotate);
+		}
+		*/
 		
-		double rotateSpeed = 1;
-		double driveSpeed = 1;
-		double rotate = Joysticks.driver.getX() * -rotateSpeed;
-		double drive = Joysticks.driver.getY() * -driveSpeed;
+		/*
+		double rotate = Joysticks.driver.getX() * -1;
+		double drive = Joysticks.driver.getY() * -1;
+		DriveBase.arcadeDrive(drive, rotate);
+		*/
 		
 		//ARCADE DRIVE MOTORS ARE AUTOMATICALLY REVERSED
 		//so don't reverse polarity on motors.
-		DriveBase.arcadeDrive(drive, rotate);
+		
 	}
 	
 	public static void drive(double driveSpeed, double rotateSpeed){

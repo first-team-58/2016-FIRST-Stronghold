@@ -14,16 +14,24 @@ public class Mechanisms{
 	public static int feederSpeed;
 	public static int intakeSpeed;
 	public static double wheelSpeed;
+	public static double armExtendSpeed;
+	public static double armSpeed;
+	public static double driveSpeed;
+	public static double rotateSpeed;
+	
+	private static boolean shooterDone;
+	private static boolean collectorDone;
+	
+	public static boolean facingFront;
 	
 	//Talons
 	private static Talon shooterArm = new Talon(2);
 	private static Talon shooterWheelLeft = new Talon(3);
 	private static Talon shooterWheelRight = new Talon(4);
 	private static Talon armExtend = new Talon(5);
-	private static Talon armArm = new Talon(6);
+	private static Talon arm = new Talon(6);
 	private static Talon collector = new Talon(7);
 	
-	//shooter sensors
 	//private static Encoder encoderShooterLeft = new Encoder(0, 1);
 	//private static Encoder encoderShooterRight = new Encoder(2, 3);
 	private static Relay feeder = new Relay(1);
@@ -33,39 +41,43 @@ public class Mechanisms{
 	private static AnalogInput collectorAngle = new AnalogInput(0);
 	private static AnalogInput shooterAngle = new AnalogInput(1);
 	private static DigitalInput ballStop = new DigitalInput(6);
+	private static AnalogInput ir = new AnalogInput(3);
 	
 	//Variables
 	private static boolean shooterOverride;
 	public static double fireTime;
-	private static double collectorAimStart;
+	private static double collectorAimBegin;
 	private static double wheelStartTime;
+	private static double collectorMaxAngle;
 	
 	//Function execution booleans
 	private static boolean collectorAiming;
-	private static boolean targeting;
+	private static boolean collectorAimingDrive;
+	public static boolean targeting;
 	private static boolean rev;
 	private static boolean firing;
 	private static boolean defenseReady;
-	//defenses running
-	public static boolean drawbridgeRunning;
-	private static double drawbridgeBegin;
-	public static boolean gateRunning;
-	private static double gateBegin;
-	public static boolean porkulusRunning;
-	private static double porkulusBegin;
 	
 	//objects
-	private static Timer timer = new Timer();
+	public static Timer timer = new Timer();
 	
 	public static void init(){
+		shooterDone = false;
+		shooterDone = false;
 		timer.start();
 		targeting = false;
 		collectorAiming = false;
 		firing = false;
 		shooterOverride = false;
 		rev = false;
+		driveSpeed = 0;
+		rotateSpeed = 0;
+		facingFront = true;
 	}
 	
+	public static double getIR(){
+		return ir.getAverageVoltage();
+	}
 	
 	public static double getCollectorAngle(){
 		return collectorAngle.getAverageVoltage();
@@ -83,42 +95,74 @@ public class Mechanisms{
 		System.out.println("colector" + collectorAngle.getVoltage());
 		System.out.println("shooter" + shooterAngle.getAverageVoltage());
 		
-		//raise collector
-		if(Joysticks.operator.getRawButton(4)){
+		if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() > 1.12){
+			collectorSpeed = -0.75;
+		} else if (Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.12 && collectorAngle.getAverageVoltage() > 1.05){
+			collectorSpeed = -0.25;
+		} else if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.05){
+			collectorSpeed = 0;
+		}
+		
+		if(Joysticks.operator.getRawButton(3)){
 			collectorSpeed = 0.5;
-		} else if(Joysticks.operator.getRawButton(3)){
-			collectorSpeed = -0.5;
 		}
 		
 		//collector controls
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = 2;
 			feederSpeed = 2;
-			wheelSpeed = -0.35;
+			wheelSpeed = -0.4;
 		}
+		
+		//COLLECT STAGING
 		
 		//move collector to collecting angle
 		if(Joysticks.operator.getRawButton(2)){
-			if(collectorAiming == false){
+			if(collectorAiming == false && Auto.programRunning == false){
 				collectorAiming = true;
+				Auto.programRunning = true;
 			}
 		}
 		
 		if(collectorAiming == true){
-			collectorAim();
-		}		
+			collectorAim(1.63, 0.5, 0.1);
+			shooterAim(1.94, 0.3, 0.1);
+		}
+
+		//DRIVE STAGING
+		
+		if(Joysticks.driver.getRawButton(1)){
+			if(collectorAimingDrive == false && Auto.programRunning == false){
+				collectorAimingDrive = true;
+				Auto.programRunning = true;
+			}
+		}
+		
+		if(collectorAimingDrive == true){
+			collectorAim(1.55, 0.5, 0.08);
+			shooterAim(1.7, 0.3, 0.08);
+		}
+		
+		if(shooterDone == true && collectorDone == true){
+			collectorAiming = false;
+			collectorAimingDrive = false;
+			Auto.programRunning = false;
+			shooterDone = false;
+		}
 		
 		//auto-targeting initiation
-		if(Joysticks.operator.getRawButton(6) && shooterOverride == false){
-			if(targeting == false){
+		if(Joysticks.operator.getRawButton(6) && shooterOverride == false && Auto.programRunning == false){
+			if(Auto.targeting == false){
 				//running for the first time
-				targeting = true;
+				Auto.targeting = true;
+				Auto.programRunning = true;
+				Auto.programStage = 0;
 			}
 		}
 		
 		//run target function
-		if(targeting == true){
-			//Auto.target();
+		if(Auto.targeting == true){
+			Auto.teleopTarget();
 		}
 		
 		//override shooter controls
@@ -148,67 +192,89 @@ public class Mechanisms{
 		//override fire boulder
 		if(Joysticks.operator.getRawButton(6) && shooterOverride == true && rev == true){
 			feederSpeed = 0;
-			
-			/*if(firing == false){
-				fireTime = timer.get();
-				firing = true;
-			}*/
 		}
 		
 		if(firing == true){
 			fireOverride();
 		}
 		
-		/*
 		//driver defense controls
 		
 		//open drawbridge
 		if(Joysticks.driver.getRawButton(1) && defenseReady == true){
-			if(drawbridgeRunning == false){
-				drawbridgeRunning = true;
-				 drawbridgeBegin = timer.get();
+			if(Auto.programRunning == false){
+				Auto.drawbridgeRunning = true;
+				Auto.programRunning = true;
+				Auto.timeFlag = timer.get();
 			}
 		}
 		
-		if(drawbridgeRunning == true){
-			Auto.drawbridge(timer.get() - drawbridgeBegin);
+		if(Auto.drawbridgeRunning == true){
+			Auto.drawbridge(Auto.timeFlag);
 		}
 		
 		//open porkulus
 		if(Joysticks.driver.getRawButton(2)){
-			if(porkulusRunning == false){
-				porkulusRunning = true;
-				porkulusBegin = timer.get();
+			if(Auto.programRunning == false){
+				Auto.porkulusRunning = true;
+				Auto.programRunning = true;
+				Auto.timeFlag = timer.get();
 			}
 		}
 		
-		if(porkulusRunning == true){
-			Auto.porkulus(timer.get() - porkulusBegin);
+		//porkulus loop
+		if(Auto.porkulusRunning == true){
+			Auto.porkulus(Auto.timeFlag);
 		}
 		
 		//open gate
 		if(Joysticks.driver.getRawButton(3)){
-			if(gateRunning == false){
-				gateRunning = true;
-				gateBegin = timer.get();
+			if(Auto.programRunning == false){
+				Auto.gateRunning = true;
+				Auto.programRunning = true;
+				Auto.timeFlag = timer.get();
 			}
 		}
 		
-		if(gateRunning == true){
-			Auto.gateOpen(timer.get() - gateBegin);
+		if(Auto.gateRunning == true){
+			Auto.gateOpen(Auto.timeFlag);
 		}
 		
-		*/
+		//CONTROL LIMITS
 		
 		//if the back ball limit is pressed, stop the feeder
 		if(ballStop.get() == true && feederSpeed == 2){
 			feederSpeed = 1;
 		}
 		
+		if(collectorAngle.getAverageVoltage() > 2.1 && collectorSpeed > 0){
+			collectorSpeed = 0;
+		}
+		
+		if(shooterAngle.getAverageVoltage() >  1.83 && shooterAngle.getAverageVoltage() <= 1.88 && shooterArmSpeed > 0){
+			shooterArmSpeed = 0.25;
+		} else if(shooterAngle.getAverageVoltage() > 1.88 && shooterArmSpeed > 0){
+			shooterArmSpeed = 0;
+		}
+		
+		
 		//set all motors
 		shooterArm.set(shooterArmSpeed);
 		collector.set(collectorSpeed);
 		rev(wheelSpeed);
+		armExtend.set(armExtendSpeed);
+		arm.set(armSpeed);
+		
+		if(Auto.porkulusRunning == true || Auto.gateRunning == true || Auto.drawbridgeRunning == true){
+			//stop teleop driving
+			Auto.programRunning = true;
+		}
+		
+		/*
+		if(Auto.programRunning == true){
+			Drive.drive(driveSpeed, rotateSpeed);
+		}
+		*/
 		
 		if(intakeSpeed == 0){
 			intake.set(Relay.Value.kReverse);
@@ -230,14 +296,16 @@ public class Mechanisms{
 	
 	//control shooter arm during override
 	private static void doShooterOverride(){
+		
 		//control shooter arm via analog stick override
-		double armSpeed = Joysticks.operator.getY();
-		if(Math.abs(armSpeed) < .1){
-			armSpeed = 0;
+		if(Auto.programRunning == false){
+			double armSpeed = Joysticks.operator.getY() * 0.5;
+			if(Math.abs(armSpeed) < .1){
+				armSpeed = 0;
+			}
+			shooterArmSpeed = armSpeed;
 		}
-		shooterArmSpeed = armSpeed;
 	}
-	
 	
 	
 	public static void rev(double shooterWheelSpeed){
@@ -286,11 +354,20 @@ public class Mechanisms{
 		shooterArm.set(shooterArmSpeed);
 	}
 	
+	private static void stage(double collectorValue, double collectorSpeed, double collectorDeadband, double shooterValue, double shooterSpeed, double shooterDeadband){
+		
+		if(Auto.programRunning == true){
+			collectorAim(collectorValue, collectorSpeed, collectorDeadband);
+			shooterAim(shooterValue, shooterSpeed, shooterDeadband);
+		}
+			
+		if(shooterDone == true && collectorDone == true){
+			Auto.programRunning = false;
+		}
+	}
 	
 	//sends a ball into the shooter
 	private static void fireOverride(){
-		
-		System.out.println(fireTime);
 		
 		if((timer.get() - fireTime) < 1){
 			feederSpeed = 0;
@@ -315,20 +392,28 @@ public class Mechanisms{
 		//feederSpeed = 2;
 	}
 	
-	private static void collectorAim(){
-		//raise arm to value 2.34
-		if(collectorAngle.getAverageVoltage() > 1.3 && collectorAngle.getAverageVoltage() < 1.4){
-			collectorAiming = false;
+	public static void shooterAim(double value, double speed, double deadband){
+		if(shooterAngle.getAverageVoltage() < (value - deadband/2)){
+			shooterArmSpeed = speed;
+		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+			shooterArmSpeed = speed * -1;
+		} else {
+			shooterArmSpeed = 0;
+			shooterDone = true;
 		}
-		
-		if(collectorAngle.getAverageVoltage() > 1.4){
-			collector.set(-0.5);
-		}
-		
-		if(collectorAngle.getAverageVoltage() < 1.3){
-			collector.set(0.5);
-		}
+	}
+	
+	private static void collectorAim(double value, double speed, double deadband){
+		if(shooterAngle.getAverageVoltage() < (value - deadband/2)){
+			shooterArmSpeed = speed;
+		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+			shooterArmSpeed = speed * -1;
+		} else {
+			shooterArmSpeed = 0;
+			shooterDone = true;
 		
 	}
+	
+}
 	
 }
