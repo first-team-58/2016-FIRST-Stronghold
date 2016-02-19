@@ -11,8 +11,6 @@ public class Drive {
 	private static double driveSpeed;
 	private static double rotateSpeed;
 	
-	public static boolean frontFacing;
-	
 	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void init(){
@@ -23,8 +21,8 @@ public class Drive {
 	}
 	
 	public static void driveTeleop(){
-		/*
-		if(frontFacing == true){
+		
+		if(Robot.frontFacing == true){
 			double rotate = Joysticks.driver.getX() * -1;
 			double drive = Joysticks.driver.getY() * -1;
 			DriveBase.arcadeDrive(drive, rotate);
@@ -33,7 +31,7 @@ public class Drive {
 			double drive = Joysticks.driver.getY() * 1;
 			DriveBase.arcadeDrive(drive, rotate);
 		}
-		*/
+		
 		
 		/*
 		double rotate = Joysticks.driver.getX() * -1;
