@@ -97,10 +97,11 @@ public class Auto{
 				if(midX >= 178 && midX <= 182){
 					//do nothing
 					Drive.drive(0, 0);
+					programStage = 1;
 				} else if(midX < 178 && midX > 166){
-					Drive.drive(0, 0.35);
+					Drive.drive(0, 0.3);
 				} else if(midX > 182 && midX < 194){
-					Drive.drive(0, -0.35);
+					Drive.drive(0, -0.3);
 				} else if(midX < 166){
 					Drive.drive(0, 0.55);
 				} else if(midX > 194){
@@ -128,6 +129,7 @@ public class Auto{
 					//do nothing
 					Drive.drive(0, 0);
 					programStage = 1;
+					System.out.println("here");
 				} else if(midX < 178 && midX > 166){
 					Drive.drive(0, 0.35);
 				} else if(midX > 182 && midX < 194){
@@ -155,13 +157,13 @@ public class Auto{
 				Mechanisms.targeting = false;
 				programStage = 0;
 			} else if(midY < 178 && midY > 166){
-				Mechanisms.doShooter(0.3);
-			} else if(midY > 182 && midY < 194){
 				Mechanisms.doShooter(-0.3);
+			} else if(midY > 182 && midY < 194){
+				Mechanisms.doShooter(0.3);
 			} else if(midY < 166){
-				Mechanisms.doShooter(0.5);
-			} else if(midY > 194){
 				Mechanisms.doShooter(-0.5);
+			} else if(midY > 194){
+				Mechanisms.doShooter(0.5);
 			}
 			
 		}
@@ -185,7 +187,6 @@ public class Auto{
 		 * rotation alignment uses mid-Y and aiming uses mid-X
 		 * aiming and rotation constants can be scaled by a factor of px w/h
 		 */
-		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
@@ -193,7 +194,6 @@ public class Auto{
 		//midXArray = grip.
 		nObjects = midXArray.length;
 		
-		System.out.println(nObjects);
 		
 		if(programStage == 0){
 			if(nObjects == 1){
@@ -204,21 +204,19 @@ public class Auto{
 				//PID integration for accuracy
 				//midX constants currently for GRIP image size = 1x
 				
-				if(midX >= 178 && midX <= 182){
-					//do nothing
+				if(midX > 177 && midX < 187){
 					Mechanisms.rotateSpeed = 0;
 					Mechanisms.driveSpeed = 0;
 					Mechanisms.targeting = false;
 					programStage = 1;
-					//programRunning = false; //UNCOMMENT TO STOP AT THIS TARGET STAGE
-				} else if(midX < 178 && midX > 166){
-					Mechanisms.rotateSpeed = 0.35;
-				} else if(midX > 182 && midX < 194){
-					Mechanisms.rotateSpeed = -0.35;
-				} else if(midX < 166){
-					Mechanisms.rotateSpeed = 0.55;
-				} else if(midX > 194){
-					Mechanisms.rotateSpeed = -0.55;
+				} else if(midX < 177){
+					Mechanisms.rotateSpeed = 0.58;
+				} else if(midX > 187){
+					Mechanisms.rotateSpeed = -0.58;
+				}
+				
+				if(Mechanisms.timer.get() - timeFlag > 5){
+					programStage = 1;
 				}
 				
 			} else if(nObjects == 2){
@@ -236,23 +234,18 @@ public class Auto{
 				
 				//retrieve midpoint
 				midX = midXArray[target];
-				System.out.println(midX);
 				
-				if(midX >= 178 && midX <= 182){
-					//do nothing
+				if(midX > 177 && midX < 187){
 					Mechanisms.rotateSpeed = 0;
 					Mechanisms.driveSpeed = 0;
 					Mechanisms.targeting = false;
 					programStage = 1;
-					//programRunning = false; //UNCOMMENT TO STOP AT THIS TARGET STAGE
-				} else if(midX < 178 && midX > 166){
-					Mechanisms.rotateSpeed = 0.35;
-				} else if(midX > 182 && midX < 194){
-					Mechanisms.rotateSpeed = -0.35;
-				} else if(midX < 166){
-					Mechanisms.rotateSpeed = 0.55;
-				} else if(midX > 194){
-					Mechanisms.rotateSpeed = -0.55;
+					programRunning = false;
+					targeting = false;
+				} else if(midX < 177){
+					Mechanisms.rotateSpeed = 0.58;
+				} else if(midX > 187){
+					Mechanisms.rotateSpeed = -0.58;
 				}
 				
 			} else if(nObjects == 0 || nObjects > 2){
@@ -264,6 +257,15 @@ public class Auto{
 		if(programStage == 1){
             //align y axis
             midY = midYArray[target];
+
+            if(Mechanisms.shooterAngle.getAverageVoltage() < 1.15){
+    			Mechanisms.shooterArmSpeed = .25;
+    		} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.25){
+    			Mechanisms.shooterArmSpeed = -.25;
+    		} else {
+    			Mechanisms.shooterArmSpeed = 0;
+    			programStage = 2;
+    		}
             
             //only use one of these
             
@@ -272,7 +274,7 @@ public class Auto{
              * target offset (172) is a rough higher-end average of ideal values for two ranges within
              * shooting range, will probably only work with farther distances
             */
-            
+            /*
             double targetOffset = 172;
             
             if(midY >= targetOffset - 1 && midX <= targetOffset + 1){
@@ -307,6 +309,7 @@ public class Auto{
             
             //then do the aiming thing
 			*/
+            
 		}
 		
 		//shoot boulder

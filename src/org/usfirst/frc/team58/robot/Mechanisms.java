@@ -38,8 +38,8 @@ public class Mechanisms{
 	private static Relay intake = new Relay(0);
 	
 	//Collector sensors
-	private static AnalogInput collectorAngle = new AnalogInput(0);
-	private static AnalogInput shooterAngle = new AnalogInput(1);
+	public static AnalogInput collectorAngle = new AnalogInput(0);
+	public static AnalogInput shooterAngle = new AnalogInput(1);
 	private static DigitalInput ballStop = new DigitalInput(6);
 	private static AnalogInput ir = new AnalogInput(3);
 	
@@ -113,7 +113,7 @@ public class Mechanisms{
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = 2;
 			feederSpeed = 2;
-			wheelSpeed = -0.4;
+			wheelSpeed = -0.35;
 		}
 		
 		//move collector to collecting angle
@@ -125,10 +125,11 @@ public class Mechanisms{
 		}
 		
 		if(collectorAiming == true){
-			collectorAim(1.63, 0.5, 0.1);
+			collectorAim(1.63, 0.5, 0.15);
 			shooterAim(1.94, 0.3, 0.1);
 		}
 
+		/*
 		//drive staging
 		if(Joysticks.driver.getRawButton(1)){
 			if(collectorAimingDrive == false && Auto.programRunning == false){
@@ -141,6 +142,7 @@ public class Mechanisms{
 			collectorAim(1.55, 0.5, 0.08);
 			shooterAim(1.7, 0.3, 0.08);
 		}
+		*/
 		
 		if(shooterDone == true && collectorDone == true){
 			collectorAiming = false;
@@ -150,9 +152,11 @@ public class Mechanisms{
 		}
 		//-------------------------------TARGETING--------------------------------------//
 		//------------------------------------------------------------------------------//
+		/*
 		if(Joysticks.operator.getRawButton(10) && Auto.programRunning == false){
 			if(Auto.targeting == false){
 				//running for the first time
+				System.out.println(targeting);
 				Auto.targeting = true;
 				Auto.programRunning = true;
 				Auto.programStage = 0;
@@ -162,6 +166,7 @@ public class Mechanisms{
 		if(Auto.targeting == true){
 			Auto.teleopTarget();
 		}
+		*/
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5)){
@@ -196,12 +201,14 @@ public class Mechanisms{
 		}
 		*/
 		
+		/*
 		//open porkulus
 		if(Joysticks.driver.getRawButton(2)){
 			if(Auto.programRunning == false){
 				Auto.porkulusRunning = true;
 				Auto.programRunning = true;
 				Auto.timeFlag = timer.get();
+				Auto.programStage = 0;
 			}
 		}
 		
@@ -209,7 +216,7 @@ public class Mechanisms{
 		if(Auto.porkulusRunning == true){
 			Auto.porkulus(Auto.timeFlag);
 		}
-		
+		*/
 		/*
 		//open gate
 		if(Joysticks.driver.getRawButton(3)){
@@ -224,6 +231,21 @@ public class Mechanisms{
 			Auto.gateOpen(Auto.timeFlag);
 		}
 		*/
+		
+		if(Joysticks.driver.getRawButton(8) && Auto.programRunning == false){
+			if(Auto.targeting == false){
+				//running for the first time
+				Auto.targeting = true;
+				Auto.programRunning = true;
+				Auto.programStage = 0;
+				Auto.timeFlag = timer.get();
+			}
+		}
+		//run target function
+		if(Auto.targeting == true){
+			System.out.println(targeting);
+			Auto.teleopTarget();
+		}
 		
 		//----------------------------TELEOP END-----------------------------------------//
 		//-------------------------------------------------------------------------------//
@@ -256,11 +278,11 @@ public class Mechanisms{
 			Auto.programRunning = true;
 		}
 		
-		/*
+		
 		if(Auto.programRunning == true){
 			Drive.drive(driveSpeed, rotateSpeed);
 		}
-		*/
+		
 		
 		if(intakeSpeed == 0){
 			intake.set(Relay.Value.kReverse);
