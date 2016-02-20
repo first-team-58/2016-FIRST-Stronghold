@@ -2,6 +2,7 @@ package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Timer;
 
 public class Drive {
 	
@@ -31,16 +32,6 @@ public class Drive {
 			double drive = Joysticks.driver.getY() * 1;
 			DriveBase.arcadeDrive(drive, rotate);
 		}
-		
-		
-		/*
-		double rotate = Joysticks.driver.getX() * -1;
-		double drive = Joysticks.driver.getY() * -1;
-		DriveBase.arcadeDrive(drive, rotate);
-		*/
-		
-		//ARCADE DRIVE MOTORS ARE AUTOMATICALLY REVERSED
-		//so don't reverse polarity on motors.
 		
 	}
 	

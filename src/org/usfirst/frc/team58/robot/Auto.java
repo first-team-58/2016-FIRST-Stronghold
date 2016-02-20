@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 public class Auto{
 	
-	private static Timer time = new Timer();
+	private static Timer timer = new Timer();
 	private static NetworkTable grip;
 	
 	private static int nObjects;
@@ -23,25 +23,17 @@ public class Auto{
 	private static double distance;
 	
 	//program variable
-	public static boolean drawbridgeRunning;
-	public static boolean gateRunning;
-	public static boolean porkulusRunning;
-	public static boolean programRunning;
+	public static boolean porkulusRunning = false;
+	public static boolean programRunning = false;
 	public static double timeFlag;
-	public static double programStage;
+	public static double programStage = 0;
 	private static boolean shootBegun = false;
 	public static boolean targeting = false;
 	
 	private static double[] error = {-1};
 	
 	public static void init(){
-		time.start();
-		Drive.reset();
-		programStage = 0;
-		drawbridgeRunning = false;
-		gateRunning = false;
-		porkulusRunning = false;
-		programRunning = false;
+		timer.start();
 	}
 	
 	public static void run(int program){
@@ -49,41 +41,80 @@ public class Auto{
 		switch(program){
 			case 0:
 				nothing();
+			case 1:
+				collectorReset();
+			case 2:
+				lowBarShoot();
+			case 3:
+				defenseStraight();
+			case 4:
+				defenseLeft();
+			case 5:
+				defenseRight();
 			break;
 		}
-	
 	}
 	
 	public static void collectorReset(){
 		//raise collector to 90 degrees for start of match
 	}
 	
+	public static void lowBarShoot(){
+		//go through low bar, turn right and shoot
+		if(timer.get() < 4){
+			Drive.drive(-0.5, 0);
+		} else if(timer.get() < 4.5){
+			Drive.drive(0, -0.7);
+		} else if(timer.get() < 6.7){
+			Drive.drive(-0.5, 0);
+		} else if(timer.get() < 7.2){
+			Drive.drive(0, 0.8);
+		} else {
+			target();
+		}
+	}
+	
+	public static void defenseStraight(){
+		if(timer.get() < 4){
+			Drive.drive(-0.5, 0);
+		} else {
+			target();
+		}
+	}
+	
+	public static void defenseLeft(){
+		if(timer.get() < 4){
+			//drive straight over defense
+			Drive.drive(-0.5, 0);
+		} else if(timer.get() < 4.5){
+			//rotate left half second
+			Drive.drive(0, 0.5);
+		} else {
+			target();
+		}
+	}
+	
+	public static void defenseRight(){
+		if(timer.get() < 4){
+			//drive straight over defense
+			Drive.drive(-0.5, 0);
+		} else if(timer.get() < 4.5){
+			//rotate right half second
+			Drive.drive(0, -0.5);
+		} else {
+			target();
+		}
+	}
+	
 	//autonomous program
 	@SuppressWarnings("deprecation")
 	public static void target(){
-		/*
-		target a goal and fire a boulder:
-		retrieve and sort through contours
-		find optimal goal (largest width probably)
-		rotate robot until target is in a range
-		do so with PID rotation
-		use curve to calculate correct shooting angle given tape variable
-		*/
-		
-		/*
-		 * if camera is switched to a 90 degree orientation:
-		 * rotation alignment uses mid-Y and aiming uses mid-X
-		 * aiming and rotation constants can be scaled by a factor of px w/h
-		 */
-		
+
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
 		heightArray = grip.getNumberArray("height", error);
-		//midXArray = grip.
 		nObjects = midXArray.length;
-		
-		System.out.println(nObjects);
 		
 		if(programStage == 0){
 			if(nObjects == 1){
@@ -91,21 +122,13 @@ public class Auto{
 				midX = midXArray[target];
 				
 				//align to midpoint x
-				//PID integration for accuracy
-				//midX constants currently for GRIP image size = 1x
-				
-				if(midX >= 178 && midX <= 182){
-					//do nothing
+				if(midX > 177 && midX < 187){
 					Drive.drive(0, 0);
 					programStage = 1;
-				} else if(midX < 178 && midX > 166){
-					Drive.drive(0, 0.3);
-				} else if(midX > 182 && midX < 194){
-					Drive.drive(0, -0.3);
-				} else if(midX < 166){
-					Drive.drive(0, 0.55);
-				} else if(midX > 194){
-					Drive.drive(0, -0.55);
+				} else if(midX < 177){
+					Drive.drive(0, 0.58);
+				} else if(midX > 187){
+					Drive.drive(0, -0.58);
 				}
 				
 			} else if(nObjects == 2){
@@ -123,197 +146,132 @@ public class Auto{
 				
 				//retrieve midpoint
 				midX = midXArray[target];
-				System.out.println(midX);
 				
-				if(midX >= 178 && midX <= 182){
-					//do nothing
+				//align to midpoint x
+				if(midX > 177 && midX < 187){
 					Drive.drive(0, 0);
 					programStage = 1;
-					System.out.println("here");
-				} else if(midX < 178 && midX > 166){
-					Drive.drive(0, 0.35);
-				} else if(midX > 182 && midX < 194){
-					Drive.drive(0, -0.35);
-				} else if(midX < 166){
-					Drive.drive(0, 0.55);
-				} else if(midX > 194){
-					Drive.drive(0, -0.55);
+				} else if(midX < 177){
+					Drive.drive(0, 0.58);
+				} else if(midX > 187){
+					Drive.drive(0, -0.58);
 				}
 				
 			} else if(nObjects == 0 || nObjects > 2){
-				
-			}
-			
-		}
-		
-		//aim the arm
-		if(programStage == 1){
-			//align y axis
-			midY = midYArray[target];
-			
-			if(midY >= 178 && midY <= 182){
-				//do nothing
-				Mechanisms.shooterArmSpeed = 0;
-				Mechanisms.targeting = false;
+				programRunning = false;
+				targeting = false;
 				programStage = 0;
-			} else if(midY < 178 && midY > 166){
-				Mechanisms.doShooter(-0.3);
-			} else if(midY > 182 && midY < 194){
-				Mechanisms.doShooter(0.3);
-			} else if(midY < 166){
-				Mechanisms.doShooter(-0.5);
-			} else if(midY > 194){
-				Mechanisms.doShooter(0.5);
 			}
 			
-		}
-		
-	}
-	
-	
-	@SuppressWarnings("deprecation")
-	public static void teleopTarget(){
-		/*
-		target a goal and fire a boulder:
-		retrieve and sort through contours
-		find optimal goal (largest width probably)
-		rotate robot until target is in a range
-		do so with PID rotation
-		use curve to calculate correct shooting angle given tape variable
-		*/
-		
-		/*
-		 * if camera is switched to a 90 degree orientation:
-		 * rotation alignment uses mid-Y and aiming uses mid-X
-		 * aiming and rotation constants can be scaled by a factor of px w/h
-		 */
-		grip = NetworkTable.getTable("GRIP/tapeData");
-		midXArray = grip.getNumberArray("centerX", error);
-		midYArray = grip.getNumberArray("centerY", error);
-		heightArray = grip.getNumberArray("height", error);
-		//midXArray = grip.
-		nObjects = midXArray.length;
-		
-		
-		if(programStage == 0){
-			if(nObjects == 1){
-				target = 0;
-				midX = midXArray[target];
-				
-				//align to midpoint x
-				//PID integration for accuracy
-				//midX constants currently for GRIP image size = 1x
-				
-				if(midX > 177 && midX < 187){
-					Mechanisms.rotateSpeed = 0;
-					Mechanisms.driveSpeed = 0;
-					Mechanisms.targeting = false;
-					programStage = 1;
-				} else if(midX < 177){
-					Mechanisms.rotateSpeed = 0.58;
-				} else if(midX > 187){
-					Mechanisms.rotateSpeed = -0.58;
-				}
-				
-				if(Mechanisms.timer.get() - timeFlag > 5){
-					programStage = 1;
-				}
-				
-			} else if(nObjects == 2){
-				//more than 1 goal found
-				widthArray = grip.getNumberArray("width", error);
-				largestWidth = 0;
-				
-				//find optimal target
-				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > largestWidth){
-						largestWidth = widthArray[i];
-						target = i;
-					}
-				}
-				
-				//retrieve midpoint
-				midX = midXArray[target];
-				
-				if(midX > 177 && midX < 187){
-					Mechanisms.rotateSpeed = 0;
-					Mechanisms.driveSpeed = 0;
-					Mechanisms.targeting = false;
-					programStage = 1;
-					programRunning = false;
-					targeting = false;
-				} else if(midX < 177){
-					Mechanisms.rotateSpeed = 0.58;
-				} else if(midX > 187){
-					Mechanisms.rotateSpeed = -0.58;
-				}
-				
-			} else if(nObjects == 0 || nObjects > 2){
-			}
-			
-		}
-		
-		//aim the arm
-		if(programStage == 1){
+		} else if(programStage == 1){
             //align y axis
             midY = midYArray[target];
 
             if(Mechanisms.shooterAngle.getAverageVoltage() < 1.15){
-    			Mechanisms.shooterArmSpeed = .25;
+    			Mechanisms.doShooter(0.4);
     		} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.25){
-    			Mechanisms.shooterArmSpeed = -.25;
+    			Mechanisms.doShooter(-0.4);
+    		} else {
+    			Mechanisms.doShooter(0);
+    			programStage = 2;
+    		}
+        } else if(programStage == 2){
+        	//shoot the ball
+        	
+			if(shootBegun == false){
+				shootBegun = true;
+				timeFlag = Mechanisms.timer.get();
+			}
+			
+			if(Mechanisms.timer.get() - timeFlag < 1.5){
+				Mechanisms.rev(1);
+			} else if(Mechanisms.timer.get() - timeFlag < 3.5) {
+				Mechanisms.rev(0);
+				Mechanisms.doFeeder(0);
+			} else {
+				Mechanisms.doFeeder(1);
+				shootBegun = false;
+				programStage = 0;
+				programRunning = false;
+				targeting = false;
+			}
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static void teleopTarget(){
+		
+		grip = NetworkTable.getTable("GRIP/tapeData");
+		midXArray = grip.getNumberArray("centerX", error);
+		midYArray = grip.getNumberArray("centerY", error);
+		heightArray = grip.getNumberArray("height", error);
+		nObjects = midXArray.length;
+		
+		if(programStage == 0){
+			if(nObjects == 1){
+				target = 0;
+				midX = midXArray[target];
+				
+				//align to midpoint x
+				if(midX > 177 && midX < 187){
+					Mechanisms.rotateSpeed = 0;
+					Mechanisms.driveSpeed = 0;
+					Mechanisms.targeting = false;
+					programStage = 1;
+				} else if(midX < 177){
+					Mechanisms.rotateSpeed = 0.58;
+				} else if(midX > 187){
+					Mechanisms.rotateSpeed = -0.58;
+				}
+				
+			} else if(nObjects == 2){
+				//more than 1 goal found
+				widthArray = grip.getNumberArray("width", error);
+				largestWidth = 0;
+				
+				//find optimal target
+				for(int i = 0; i <= 1; i++){
+					if(widthArray[i] > largestWidth){
+						largestWidth = widthArray[i];
+						target = i;
+					}
+				}
+				
+				//retrieve midpoint
+				midX = midXArray[target];
+				
+				if(midX > 177 && midX < 187){
+					Mechanisms.rotateSpeed = 0;
+					Mechanisms.driveSpeed = 0;
+					Mechanisms.targeting = false;
+					programStage = 1;
+				} else if(midX < 177){
+					Mechanisms.rotateSpeed = 0.58;
+				} else if(midX > 187){
+					Mechanisms.rotateSpeed = -0.58;
+				}
+				
+			} else if(nObjects == 0 || nObjects > 2){
+				programRunning = false;
+				targeting = false;
+				programStage = 0;
+			}
+			
+		} else if(programStage == 1){
+            //align y axis
+            midY = midYArray[target];
+
+            if(Mechanisms.shooterAngle.getAverageVoltage() < 1.15){
+    			Mechanisms.shooterArmSpeed = .4;
+    		} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.25){
+    			Mechanisms.shooterArmSpeed = -.4;
     		} else {
     			Mechanisms.shooterArmSpeed = 0;
     			programStage = 2;
     		}
-            
-            //only use one of these
-            
-            /*
-             * METHOD 1: brute force static mid-y set-point
-             * target offset (172) is a rough higher-end average of ideal values for two ranges within
-             * shooting range, will probably only work with farther distances
-            */
-            /*
-            double targetOffset = 172;
-            
-            if(midY >= targetOffset - 1 && midX <= targetOffset + 1){
-                //stop shooter
-                Mechanisms.shooterArmSpeed = 0;
-                programStage = 2;
-				//programRunning = false; //UNCOMMENT TO STOP AT THIS TARGET STAGE
-            } else if(midY < targetOffset - 1 && midY > targetOffset - 5){
-                //lower arm
-                Mechanisms.shooterArmSpeed = -0.25;
-            } else if(midY > targetOffset + 1 && midY < targetOffset + 5){
-                //raise arm
-                Mechanisms.shooterArmSpeed = 0.25;
-            } else if(midY > targetOffset + 5){
-                //raise shooter
-                Mechanisms.shooterArmSpeed = 0.5;
-            } else if(midY < targetOffset - 5){
-                //lower shooter
-                Mechanisms.shooterArmSpeed = -0.5;
-            }
-            
-            /*
-            //METHOD 2: LINEAR REGRESSION MAPPING
-            //trial: width:height ratio correlation regression mapping
-            //find an equation for (width/height) vs. midYs
-            //plug the width/height into the equation and move arm to the result (targetOffset)
-            
-            width = widthArray[target];
-            height = heightArray[target];
-            double ratio = width/height;
-            //targetOffset = (coefficient * ratio) + constant; //this is the equation
-            
-            //then do the aiming thing
-			*/
-            
-		}
-		
-		//shoot boulder
-		if(programStage == 2){
+        } else if(programStage == 2){
+        	//shoot the ball
+        	
 			if(shootBegun == false){
 				shootBegun = true;
 				timeFlag = Mechanisms.timer.get();
@@ -361,21 +319,54 @@ public class Auto{
 		}
 	}
 	
- 	//open the drawbridge
-	public static void drawbridge(double elapsedTime){
-		drawbridgeRunning = false;
-		programRunning = false;
-	}
-	
-	//open the gate
-	public static void gateOpen(double elapsedTime){
-		drawbridgeRunning = false;
-		programRunning = false;
-	}
-	
 	//sit still
 	private static void nothing(){
-		//set drive and other functions to zero
+		//zero all functions
+		Drive.drive(0, 0);
+		Mechanisms.doShooter(0);
+		Mechanisms.doCollector(0);
+		Mechanisms.doFeeder(1);
 	}
 	
 }
+
+
+/*
+ * METHOD 1: brute force static mid-y set-point
+ * target offset (172) is a rough higher-end average of ideal values for two ranges within
+ * shooting range, will probably only work with farther distances
+
+double targetOffset = 172;
+
+if(midY >= targetOffset - 1 && midX <= targetOffset + 1){
+    //stop shooter
+    Mechanisms.shooterArmSpeed = 0;
+    programStage = 2;
+	//programRunning = false; //UNCOMMENT TO STOP AT THIS TARGET STAGE
+} else if(midY < targetOffset - 1 && midY > targetOffset - 5){
+    //lower arm
+    Mechanisms.shooterArmSpeed = -0.25;
+} else if(midY > targetOffset + 1 && midY < targetOffset + 5){
+    //raise arm
+    Mechanisms.shooterArmSpeed = 0.25;
+} else if(midY > targetOffset + 5){
+    //raise shooter
+    Mechanisms.shooterArmSpeed = 0.5;
+} else if(midY < targetOffset - 5){
+    //lower shooter
+    Mechanisms.shooterArmSpeed = -0.5;
+}
+
+/*
+//METHOD 2: LINEAR REGRESSION MAPPING
+//trial: width:height ratio correlation regression mapping
+//find an equation for (width/height) vs. midYs
+//plug the width/height into the equation and move arm to the result (targetOffset)
+
+width = widthArray[target];
+height = heightArray[target];
+double ratio = width/height;
+//targetOffset = (coefficient * ratio) + constant; //this is the equation
+
+//then do the aiming thing
+*/

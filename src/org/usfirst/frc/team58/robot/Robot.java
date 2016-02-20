@@ -38,12 +38,16 @@ public class Robot extends IterativeRobot {
     
     //called on robot startup
     public void robotInit() {
-    	//autoChooser = new SendableChooser();
     	
-        //create auto choices
-        //autoChooser.addDefault("nothing", 0);
-        //autoChooser.addObject("My Auto", customAuto);
-        //SmartDashboard.putData("Auto choices", autoChooser);
+    	autoChooser = new SendableChooser();
+        autoChooser.addDefault("nothing", 0);
+        autoChooser.addDefault("collector reset", 1);
+        autoChooser.addDefault("Low bar", 2);
+        autoChooser.addDefault("defense straight", 3);
+        autoChooser.addDefault("defense turn left", 4);
+        autoChooser.addDefault("defense turn right", 5);
+        autoChooser.addObject("My Auto", customAuto);
+        SmartDashboard.putData("Auto choices", autoChooser);
     	
     	frontFacing = true;
     	
@@ -65,7 +69,7 @@ public class Robot extends IterativeRobot {
     	
     	//retrieve autonomous selection from the SmartDashboard
     	try{
-    	program = (int) autoChooser.getSelected();
+    		program = (int) autoChooser.getSelected();
     	} catch(Exception e){
     		System.out.println("failed to retrieve selection");
     	}
@@ -73,16 +77,16 @@ public class Robot extends IterativeRobot {
     	//debug the selection
 		System.out.println("Auto selected: " + autoSelected);
 		SmartDashboard.putNumber("Auto", program);
-		
-		//initialize autonomous
-		timer.start();
-		//Auto.init();
+		Auto.init();
     }
 
     //called periodically during autonomous (enabled)
     public void autonomousPeriodic() {
-    	//Auto.run(program);
-    	Auto.target();
+    	Auto.run(program);
+    }
+    
+    public void teleopInit(){
+    	
     }
 
     //called periodically during teleoperated mode (enabled)

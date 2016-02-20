@@ -273,7 +273,7 @@ public class Mechanisms{
 		armExtend.set(armExtendSpeed);
 		arm.set(armSpeed);
 		
-		if(Auto.porkulusRunning == true || Auto.gateRunning == true || Auto.drawbridgeRunning == true){
+		if(Auto.porkulusRunning == true){
 			//stop teleop driving
 			Auto.programRunning = true;
 		}
@@ -402,9 +402,16 @@ public class Mechanisms{
 		} else {
 			collectorSpeed = 0;
 			collectorDone = true;
-		
+		}
 	}
 	
-}
-	
+	public static void doFeeder(int intakeSpeed){
+		if(intakeSpeed == 0){
+			intake.set(Relay.Value.kReverse);
+		} else if(intakeSpeed == 1){
+			intake.set(Relay.Value.kOff);
+		} else if(intakeSpeed == 2){
+			intake.set(Relay.Value.kForward);
+		}
+	}
 }
