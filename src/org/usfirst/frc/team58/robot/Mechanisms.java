@@ -14,50 +14,21 @@ public class Mechanisms{
 	public static int feederSpeed;
 	public static int intakeSpeed;
 	public static double wheelSpeed;
-	public static double armExtendSpeed;
-	public static double armSpeed;
 	public static double driveSpeed;
 	public static double rotateSpeed;
 	
 	public static boolean shooterDone;
 	private static boolean collectorDone;
-	
 	public static boolean facingFront;
 	
-	//Talons
-	private static Talon shooterArm = new Talon(2);
-	private static Talon shooterWheelLeft = new Talon(3);
-	private static Talon shooterWheelRight = new Talon(4);
-	private static Talon armExtend = new Talon(5);
-	private static Talon arm = new Talon(6);
-	private static Talon collector = new Talon(7);
-	
-	//private static Encoder encoderShooterLeft = new Encoder(0, 1);
-	//private static Encoder encoderShooterRight = new Encoder(2, 3);
-	private static Relay feeder = new Relay(1);
-	private static Relay intake = new Relay(0);
-	
-	//Collector sensors
-	public static AnalogInput collectorAngle = new AnalogInput(0);
-	public static AnalogInput shooterAngle = new AnalogInput(1);
-	private static DigitalInput ballStop = new DigitalInput(6);
-	private static AnalogInput ir = new AnalogInput(3);
-	
-	//Variables
-	private static boolean shooterOverride;
 	public static double fireTime;
 	private static double collectorAimBegin;
 	private static double wheelStartTime;
-	private static double collectorMaxAngle;
 	
-	//Function execution booleans
 	private static boolean collectorAiming;
-	private static boolean collectorAimingDrive;
 	public static boolean targeting;
 	private static boolean rev;
-	private static boolean defenseReady;
 	
-	//objects
 	public static Timer timer = new Timer();
 	
 	public static void init(){
@@ -66,23 +37,10 @@ public class Mechanisms{
 		timer.start();
 		targeting = false;
 		collectorAiming = false;
-		shooterOverride = false;
 		rev = false;
 		driveSpeed = 0;
 		rotateSpeed = 0;
 		facingFront = true;
-	}
-	
-	public static double getIR(){
-		return ir.getAverageVoltage();
-	}
-	
-	public static double getCollectorAngle(){
-		return collectorAngle.getAverageVoltage();
-	}
-	
-	public static double getShooterAngle(){
-		return shooterAngle.getAverageVoltage();
 	}
 	
 	public static void doTeleop(){
@@ -95,19 +53,14 @@ public class Mechanisms{
 		intakeSpeed = 1;
 		
 		//System.out.println("colector" + collectorAngle.getVoltage());
-		//System.out.println("shooter" + shooterAngle.getAverageVoltage());
+		//System.out.println("shooter" + Inputs.getShooterAngle());
 		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
-		if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() > 1.12){
-			collectorSpeed = -0.85;
-		} else if (Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.12 && collectorAngle.getAverageVoltage() > 1.05){
-			collectorSpeed = -0.35;
-		} else if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.05){
-			collectorSpeed = 0;
-		}
-		
 		doShooterOverride();
+		if(Joysticks.operator.getRawButton(4)){
+			collectorSpeed = -0.85;
+		}
 		
 		if(Joysticks.operator.getRawButton(3)){
 			collectorSpeed = 0.6;
@@ -120,7 +73,7 @@ public class Mechanisms{
 			wheelSpeed = -0.35;
 		}
 		
-		//move collector to collecting angle
+		//auto collection angle
 		if(Joysticks.operator.getRawButton(2)){
 			if(collectorAiming == false && Auto.programRunning == false){
 				collectorAiming = true;
@@ -135,7 +88,6 @@ public class Mechanisms{
 		
 		if(shooterDone == true && collectorDone == true){
 			collectorAiming = false;
-			collectorAimingDrive = false;
 			Auto.programRunning = false;
 			shooterDone = false;
 		}
@@ -162,54 +114,63 @@ public class Mechanisms{
 		//---------------------------TELEOP MOTOR CONTROLS-------------------------------//
 		//-------------------------------------------------------------------------------//
 		
-		//if the back ball limit is pressed, stop the feeder
-		if(ballStop.get() == true && feederSpeed == 2){
-			feederSpeed = 1;
-		}
-		
-		if(collectorAngle.getAverageVoltage() > 2.1 && collectorSpeed > 0){
+		//soft limits
+		if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
 			collectorSpeed = 0;
 		}
 		
-		if(shooterAngle.getAverageVoltage() >  1.83 && shooterAngle.getAverageVoltage() <= 1.88 && shooterArmSpeed > 0){
+		if(collectorSpeed < 0){
+			if(Inputs.getCollectorAngle() > 1.12){
+				collectorSpeed = collectorSpeed;
+			} else if(Inputs.getCollectorAngle() > 1.05){
+				collectorSpeed = -0.35;
+			} else {
+				collectorSpeed = 0;
+			}
+		}
+		
+		if(Inputs.getShooterAngle() >  1.83 && Inputs.getShooterAngle() <= 1.88 && shooterArmSpeed > 0){
 			shooterArmSpeed = 0.25;
-		} else if(shooterAngle.getAverageVoltage() > 1.88 && shooterArmSpeed > 0){
+		} else if(Inputs.getShooterAngle() > 1.88 && shooterArmSpeed > 0){
 			shooterArmSpeed = 0;
 		}
 		
+		//hard limits
+		
+		if(Inputs.ballStop.get() == true && feederSpeed == 2){
+			feederSpeed = 1;
+		}
+		
+		if(Inputs.limitUpCollector.get() == true && shooterArmSpeed < 0){
+			collectorSpeed = 0;
+		}
+		
+		if(Inputs.limitDownCollecor.get() == true && collectorSpeed > 0){
+			collectorSpeed = 0;
+		}
+		
+		if(Inputs.limitUpShooter.get() == true && shooterArmSpeed > 0){
+			shooterArmSpeed = 0;
+		}
+		
+		if(Inputs.limitDownShooter.get() == true && shooterArmSpeed < 0){
+			shooterArmSpeed = 0;
+		}
 		
 		//set all motors
-		shooterArm.set(shooterArmSpeed);
-		collector.set(collectorSpeed);
+		Inputs.doShooter(shooterArmSpeed);
+		Inputs.doCollector(collectorSpeed);
 		setWheels(wheelSpeed);
-		armExtend.set(armExtendSpeed);
-		arm.set(armSpeed);
+		Inputs.setFeeder(feederSpeed);
+		Inputs.setIntake(intakeSpeed);
 		
 		if(Auto.porkulusRunning == true){
 			//stop teleop driving
 			Auto.programRunning = true;
 		}
 		
-		
 		if(Auto.programRunning == true){
 			Drive.drive(driveSpeed, rotateSpeed);
-		}
-		
-		
-		if(intakeSpeed == 0){
-			intake.set(Relay.Value.kReverse);
-		} else if(intakeSpeed == 1){
-			intake.set(Relay.Value.kOff);
-		} else if(intakeSpeed == 2){
-			intake.set(Relay.Value.kForward);
-		}
-		
-		if(feederSpeed == 0){
-			feeder.set(Relay.Value.kForward);
-		} else if(feederSpeed == 1){
-			feeder.set(Relay.Value.kOff);
-		} else if(feederSpeed == 2){
-			feeder.set(Relay.Value.kReverse);
 		}
 		
 	}
@@ -240,9 +201,9 @@ public class Mechanisms{
 	}
 	
 	public static void shooterAim(double value, double speed, double deadband){
-		if(shooterAngle.getAverageVoltage() < (value - deadband/2)){
+		if(Inputs.getShooterAngle() < (value - deadband/2)){
 			shooterArmSpeed = speed;
-		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+		} else if(Inputs.getShooterAngle() > (value + deadband/2)){
 			shooterArmSpeed = speed * -1;
 		} else {
 			shooterArmSpeed = 0;
@@ -251,33 +212,14 @@ public class Mechanisms{
 	}
 	
 	private static void collectorAim(double value, double speed, double deadband){
-		if(collectorAngle.getAverageVoltage() < (value - deadband/2)){
+		if(Inputs.getCollectorAngle() < (value - deadband/2)){
 			collectorSpeed = speed;
-		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+		} else if(Inputs.getShooterAngle() > (value + deadband/2)){
 			collectorSpeed = speed * -1;
 		} else {
 			collectorSpeed = 0;
 			collectorDone = true;
 		}
-	}
-	
-	public static void doFeeder(int intakeSpeed){
-		if(intakeSpeed == 0){
-			intake.set(Relay.Value.kReverse);
-		} else if(intakeSpeed == 1){
-			intake.set(Relay.Value.kOff);
-		} else if(intakeSpeed == 2){
-			intake.set(Relay.Value.kForward);
-		}
-	}
-	
-	public static void doCollector(double speed){
-		collector.set(speed);
-	}
-	
-	//move shooter arm
-	public static void doShooter(double shooterArmSpeed){
-		shooterArm.set(shooterArmSpeed);
 	}
 	
 	public static void setWheels(double shooterWheelSpeed){
@@ -291,45 +233,33 @@ public class Mechanisms{
 		double differential;
 		
 		//setting wheel speeds
-		shooterWheelLeft.set(shooterWheelSpeed);
-		shooterWheelRight.set(shooterWheelSpeed);
+		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
+		Inputs.shooterWheelRight.set(shooterWheelSpeed);
 		
 		/*
-		if(Math.abs(encoderShooterLeft.getRate()) > Math.abs(encoderShooterRight.getRate())){
+		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
 			//find ratio of revolutions
-			differential = encoderShooterRight.getRate() / encoderShooterLeft.getRate();
+			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
 			//set new speed adjusted to ratio
-			shooterWheelRight.set(-shooterWheelSpeed);
-			shooterWheelLeft.set(shooterWheelSpeed * differential);
-		} else if(Math.abs(encoderShooterRight.getRate()) > Math.abs(encoderShooterLeft.getRate())){
+			Inputs.shooterWheelRight.set(-shooterWheelSpeed);
+			Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
+		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
 			//find ratio of revolutions
-			differential = encoderShooterLeft.getRate() / encoderShooterRight.getRate();
+			differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
 			//set new speed adjusted to ratio
-			shooterWheelLeft.set(shooterWheelSpeed);
-			shooterWheelRight.set(-shooterWheelSpeed * differential);
+			Inputs.shooterWheelLeft.set(shooterWheelSpeed);
+			Inputs.shooterWheelRight.set(-shooterWheelSpeed * differential);
 		}
 		
 		//check for motor stall
 		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
-		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(encoderShooterRight.getRate()) < 10)  || (Math.abs(encoderShooterRight.getRate()) < 10) )){
+		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(Inputs.encoderShooterRight.getRate()) < 10)  || (Math.abs(Inputs.encoderShooterRight.getRate()) < 10) )){
 			//stop motors
-			shooterWheelLeft.set(0);
-			shooterWheelRight.set(0);
-			//kill override controls
-			shooterOverride = false;
+			Inputs.shooterWheelLeft.set(0);
+			Inputs.shooterWheelRight.set(0);
 		}
 		*/
 		
-	}
-	
-	public static void setFeeder(int feederSpeed){
-		if(feederSpeed == 0){
-			feeder.set(Relay.Value.kForward);
-		} else if(feederSpeed == 1){
-			feeder.set(Relay.Value.kOff);
-		} else if(feederSpeed == 2){
-			feeder.set(Relay.Value.kReverse);
-		}
 	}
 	
 }

@@ -1,5 +1,6 @@
 package org.usfirst.frc.team58.robot;
 
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -20,24 +21,19 @@ import edu.wpi.first.wpilibj.vision.USBCamera;
  */
 
 public class Robot extends IterativeRobot {
-    
-	final String defaultAuto = "Default";
-    final String customAuto = "My Auto";
-    String autoSelected;
     SendableChooser autoChooser;
     private static Timer timer = new Timer();
     
-    //cameras
     CustomCameraServer server;
-    public static final String frontCam = "cam2";
-    public static final String rearCam = "cam0";
+    CameraServer ipServer;
+    public static final String frontCam = "cam0";
+    public static final String rearCam = "cam2";
     USBCamera frontCamera = null;
     USBCamera rearCamera = null;
     String camera = frontCam;
     
     public static boolean frontFacing;
     
-    //called on robot startup
     public void robotInit() {
     	
     	autoChooser = new SendableChooser();
@@ -45,18 +41,19 @@ public class Robot extends IterativeRobot {
         autoChooser.addDefault("collector reset", 1);
         autoChooser.addDefault("Low bar", 2);
         autoChooser.addDefault("defense straight", 3);
-        autoChooser.addDefault("defense turn left", 4);
-        autoChooser.addDefault("defense turn right", 5);
-        autoChooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", autoChooser);
     	
+        //USB camera setup
     	frontFacing = true;
-    	
     	initializeCameras();
-    	
     	server = CustomCameraServer.getInstance();
     	server.setQuality(50);
     	server.startAutomaticCapture(frontCamera);
+    	
+    	//IP Camera setup
+    	ipServer = CameraServer.getInstance();
+    	ipServer.setQuality(50);
+    	ipServer.startAutomaticCapture("cam1");
     	
         Auto.init();
         Mechanisms.init();
@@ -76,28 +73,21 @@ public class Robot extends IterativeRobot {
     	}
     	
     	//debug the selection
-		System.out.println("Auto selected: " + autoSelected);
 		SmartDashboard.putNumber("Auto", program);
 		Auto.init();
 		
     }
-
-    //called periodically during autonomous (enabled)
+    
     public void autonomousPeriodic() {
     	Auto.nothing();
     }
     
-    public void teleopInit(){
-    	
-    }
-
-    //called periodically during teleoperated mode (enabled)
     public void teleopPeriodic() {
 
     	Drive.driveTeleop();
         Mechanisms.doTeleop();
         
-        SmartDashboard.putNumber("shooter ", Mechanisms.getShooterAngle());
+        SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
         LiveWindow.run();
         
         if(Joysticks.driver.getRawButton(6)){
@@ -106,9 +96,8 @@ public class Robot extends IterativeRobot {
         }
     }
     
-    //called periodically during telst mode (enabled)
     public void testPeriodic() {
-    
+    	
     }
     
     public void switchCameras(){
@@ -156,9 +145,6 @@ public class Robot extends IterativeRobot {
             camera = frontCam;
             server.startAutomaticCapture(frontCamera);
         }
-
     }
     
 }
-
-//386

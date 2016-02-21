@@ -49,10 +49,6 @@ public class Auto{
 				lowBarShoot();
 			case 3:
 				defenseStraight();
-			case 4:
-				defenseLeft();
-			case 5:
-				defenseRight();
 			break;
 		}
 	}
@@ -226,12 +222,12 @@ public static void autoTarget(){
 		}
 		
 		if(targetStage == 0){ //raise shooter to pre-angle
-			if(Mechanisms.shooterAngle.getAverageVoltage() < .95){
-				Mechanisms.doShooter(0.5);
-			} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.05){
-				Mechanisms.doShooter(-0.5);
+			if(Inputs.getShooterAngle() < .95){
+				Inputs.doShooter(0.5);
+			} else if(Inputs.getShooterAngle() > 1.05){
+				Inputs.doShooter(-0.5);
 			} else {
-				Mechanisms.doShooter(0);
+				Inputs.doShooter(0);
 				targetStage = 1;
 			}
 		} else if(targetStage == 1){
@@ -253,12 +249,12 @@ public static void autoTarget(){
             //shooter align code here
             //double angle = m * midY  + b; 
             /*
-            if(Mechanisms.shooterAngle.getAverageVoltage() < (angle - 0.05)){
-				Mechanisms.doShooter(0.5);
-			} else if(Mechanisms.shooterAngle.getAverageVoltage() > (angle + 0.05)){
-				Mechanisms.doShooter(-0.5);
+            if(Inputs.getShooterAngle() < (angle - 0.05)){
+				Inputs.doShooter(0.5);
+			} else if(Inputs.getShooterAngle() > (angle + 0.05)){
+				Inputs.doShooter(-0.5);
 			} else {
-				Mechanisms.doShooter(0);
+				Inputs.doShooter(0);
 				targetStage = 3;
 			} */
 			
@@ -272,10 +268,10 @@ public static void autoTarget(){
 				Mechanisms.setWheels(1);
 			} else if(timer.get() - timeFlag < 3.5) {
 				Mechanisms.setWheels(1);
-				Mechanisms.setFeeder(0);
+				Inputs.setFeeder(0);
 			} else { //boulder was fired
 				Mechanisms.setWheels(0);
-				Mechanisms.setFeeder(1); //stop feeder wheel
+				Inputs.setFeeder(1); //stop feeder wheel
 				shootBegun = false;
 				targetStage = 0;
 			}
@@ -284,7 +280,7 @@ public static void autoTarget(){
 	
 	public static void porkulus(double time){
 
-		if(Mechanisms.getCollectorAngle() < 2.16 && programStage == 0){
+		if(Inputs.getCollectorAngle() < 2.16 && programStage == 0){
 			Mechanisms.collectorSpeed = 0.5;
 		} else if(programStage == 0){
 			programStage = 1;
@@ -312,9 +308,9 @@ public static void autoTarget(){
 	public static void nothing(){
 		//zero all functions
 		Drive.drive(0, 0);
-		Mechanisms.doShooter(0);
-		Mechanisms.doCollector(0);
-		Mechanisms.doFeeder(1);
+		Inputs.doShooter(0);
+		Inputs.doCollector(0);
+		Inputs.setFeeder(1);
 	}
 	
 }
