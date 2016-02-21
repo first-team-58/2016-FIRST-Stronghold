@@ -2,6 +2,7 @@ package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
@@ -78,11 +79,12 @@ public class Robot extends IterativeRobot {
 		System.out.println("Auto selected: " + autoSelected);
 		SmartDashboard.putNumber("Auto", program);
 		Auto.init();
+		
     }
 
     //called periodically during autonomous (enabled)
     public void autonomousPeriodic() {
-    	Auto.run(program);
+    	Auto.nothing();
     }
     
     public void teleopInit(){
@@ -94,6 +96,9 @@ public class Robot extends IterativeRobot {
 
     	Drive.driveTeleop();
         Mechanisms.doTeleop();
+        
+        SmartDashboard.putNumber("shooter ", Mechanisms.getShooterAngle());
+        LiveWindow.run();
         
         if(Joysticks.driver.getRawButton(6)){
         	switchCameras();

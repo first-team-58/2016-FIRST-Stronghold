@@ -81,6 +81,10 @@ public class Mechanisms{
 		return collectorAngle.getAverageVoltage();
 	}
 	
+	public static double getShooterAngle(){
+		return shooterAngle.getAverageVoltage();
+	}
+	
 	public static void doTeleop(){
 		double collectorArmSpeed = 0;
 		double collectorWheelSpeed = 0;
@@ -90,15 +94,15 @@ public class Mechanisms{
 		feederSpeed = 1;
 		intakeSpeed = 1;
 		
-		System.out.println("colector" + collectorAngle.getVoltage());
-		System.out.println("shooter" + shooterAngle.getAverageVoltage());
+		//System.out.println("colector" + collectorAngle.getVoltage());
+		//System.out.println("shooter" + shooterAngle.getAverageVoltage());
 		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() > 1.12){
-			collectorSpeed = -0.75;
+			collectorSpeed = -0.85;
 		} else if (Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.12 && collectorAngle.getAverageVoltage() > 1.05){
-			collectorSpeed = -0.25;
+			collectorSpeed = -0.35;
 		} else if(Joysticks.operator.getRawButton(4) &&  collectorAngle.getAverageVoltage() <= 1.05){
 			collectorSpeed = 0;
 		}
@@ -106,7 +110,7 @@ public class Mechanisms{
 		doShooterOverride();
 		
 		if(Joysticks.operator.getRawButton(3)){
-			collectorSpeed = 0.5;
+			collectorSpeed = 0.6;
 		}
 		
 		//collector controls
@@ -128,21 +132,6 @@ public class Mechanisms{
 			collectorAim(1.63, 0.5, 0.15);
 			shooterAim(1.94, 0.3, 0.1);
 		}
-
-		/*
-		//drive staging
-		if(Joysticks.driver.getRawButton(1)){
-			if(collectorAimingDrive == false && Auto.programRunning == false){
-				collectorAimingDrive = true;
-				Auto.programRunning = true;
-			}
-		}
-		
-		if(collectorAimingDrive == true){
-			collectorAim(1.55, 0.5, 0.08);
-			shooterAim(1.7, 0.3, 0.08);
-		}
-		*/
 		
 		if(shooterDone == true && collectorDone == true){
 			collectorAiming = false;
@@ -150,23 +139,10 @@ public class Mechanisms{
 			Auto.programRunning = false;
 			shooterDone = false;
 		}
-		//-------------------------------TARGETING--------------------------------------//
-		//------------------------------------------------------------------------------//
-		/*
-		if(Joysticks.operator.getRawButton(10) && Auto.programRunning == false){
-			if(Auto.targeting == false){
-				//running for the first time
-				System.out.println(targeting);
-				Auto.targeting = true;
-				Auto.programRunning = true;
-				Auto.programStage = 0;
-			}
-		}
-		//run target function
-		if(Auto.targeting == true){
+		
+		if(Joysticks.driver.getRawButton(8)){
 			Auto.teleopTarget();
 		}
-		*/
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5)){
@@ -183,71 +159,7 @@ public class Mechanisms{
 			feederSpeed = 0;
 		}
 		
-		//--------------------------DRIVER OPERATION CONTROLS-----------------------------//
-		//--------------------------------------------------------------------------------//
-		
-		/*
-		//open drawbridge
-		if(Joysticks.driver.getRawButton(3)){
-			if(Auto.programRunning == false){
-				Auto.drawbridgeRunning = true;
-				Auto.programRunning = true;
-				Auto.timeFlag = timer.get();
-			}
-		}
-		
-		if(Auto.drawbridgeRunning == true){
-			Auto.drawbridge(Auto.timeFlag);
-		}
-		*/
-		
-		/*
-		//open porkulus
-		if(Joysticks.driver.getRawButton(2)){
-			if(Auto.programRunning == false){
-				Auto.porkulusRunning = true;
-				Auto.programRunning = true;
-				Auto.timeFlag = timer.get();
-				Auto.programStage = 0;
-			}
-		}
-		
-		//porkulus loop
-		if(Auto.porkulusRunning == true){
-			Auto.porkulus(Auto.timeFlag);
-		}
-		*/
-		/*
-		//open gate
-		if(Joysticks.driver.getRawButton(3)){
-			if(Auto.programRunning == false){
-				Auto.gateRunning = true;
-				Auto.programRunning = true;
-				Auto.timeFlag = timer.get();
-			}
-		}
-		
-		if(Auto.gateRunning == true){
-			Auto.gateOpen(Auto.timeFlag);
-		}
-		*/
-		
-		if(Joysticks.driver.getRawButton(8) && Auto.programRunning == false){
-			if(Auto.targeting == false){
-				//running for the first time
-				Auto.targeting = true;
-				Auto.programRunning = true;
-				Auto.programStage = 0;
-				Auto.timeFlag = timer.get();
-			}
-		}
-		//run target function
-		if(Auto.targeting == true){
-			System.out.println(targeting);
-			Auto.teleopTarget();
-		}
-		
-		//----------------------------TELEOP END-----------------------------------------//
+		//---------------------------TELEOP MOTOR CONTROLS-------------------------------//
 		//-------------------------------------------------------------------------------//
 		
 		//if the back ball limit is pressed, stop the feeder
@@ -269,7 +181,7 @@ public class Mechanisms{
 		//set all motors
 		shooterArm.set(shooterArmSpeed);
 		collector.set(collectorSpeed);
-		rev(wheelSpeed);
+		setWheels(wheelSpeed);
 		armExtend.set(armExtendSpeed);
 		arm.set(armSpeed);
 		
@@ -315,8 +227,60 @@ public class Mechanisms{
 		}
 	}
 	
+	private static void stage(double collectorValue, double collectorSpeed, double collectorDeadband, double shooterValue, double shooterSpeed, double shooterDeadband){
+		
+		if(Auto.programRunning == true){
+			collectorAim(collectorValue, collectorSpeed, collectorDeadband);
+			shooterAim(shooterValue, shooterSpeed, shooterDeadband);
+		}
+			
+		if(shooterDone == true && collectorDone == true){
+			Auto.programRunning = false;
+		}
+	}
 	
-	public static void rev(double shooterWheelSpeed){
+	public static void shooterAim(double value, double speed, double deadband){
+		if(shooterAngle.getAverageVoltage() < (value - deadband/2)){
+			shooterArmSpeed = speed;
+		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+			shooterArmSpeed = speed * -1;
+		} else {
+			shooterArmSpeed = 0;
+			shooterDone = true;
+		}
+	}
+	
+	private static void collectorAim(double value, double speed, double deadband){
+		if(collectorAngle.getAverageVoltage() < (value - deadband/2)){
+			collectorSpeed = speed;
+		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
+			collectorSpeed = speed * -1;
+		} else {
+			collectorSpeed = 0;
+			collectorDone = true;
+		}
+	}
+	
+	public static void doFeeder(int intakeSpeed){
+		if(intakeSpeed == 0){
+			intake.set(Relay.Value.kReverse);
+		} else if(intakeSpeed == 1){
+			intake.set(Relay.Value.kOff);
+		} else if(intakeSpeed == 2){
+			intake.set(Relay.Value.kForward);
+		}
+	}
+	
+	public static void doCollector(double speed){
+		collector.set(speed);
+	}
+	
+	//move shooter arm
+	public static void doShooter(double shooterArmSpeed){
+		shooterArm.set(shooterArmSpeed);
+	}
+	
+	public static void setWheels(double shooterWheelSpeed){
 		if(rev == false){
 			//initial execution
 			rev = true;
@@ -357,61 +321,4 @@ public class Mechanisms{
 		*/
 	}
 	
-	//move shooter arm
-	public static void doShooter(double shooterArmSpeed){
-		shooterArm.set(shooterArmSpeed);
-	}
-	
-	private static void stage(double collectorValue, double collectorSpeed, double collectorDeadband, double shooterValue, double shooterSpeed, double shooterDeadband){
-		
-		if(Auto.programRunning == true){
-			collectorAim(collectorValue, collectorSpeed, collectorDeadband);
-			shooterAim(shooterValue, shooterSpeed, shooterDeadband);
-		}
-			
-		if(shooterDone == true && collectorDone == true){
-			Auto.programRunning = false;
-		}
-	}
-	
-	public static void doCollector(double speed){
-		collector.set(speed);
-	}
-	
-	//time exclusive firing for autonomous functions
-	public static void fire(){
-		//feederSpeed = 2;
-	}
-	
-	public static void shooterAim(double value, double speed, double deadband){
-		if(shooterAngle.getAverageVoltage() < (value - deadband/2)){
-			shooterArmSpeed = speed;
-		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
-			shooterArmSpeed = speed * -1;
-		} else {
-			shooterArmSpeed = 0;
-			shooterDone = true;
-		}
-	}
-	
-	private static void collectorAim(double value, double speed, double deadband){
-		if(collectorAngle.getAverageVoltage() < (value - deadband/2)){
-			collectorSpeed = speed;
-		} else if(shooterAngle.getAverageVoltage() > (value + deadband/2)){
-			collectorSpeed = speed * -1;
-		} else {
-			collectorSpeed = 0;
-			collectorDone = true;
-		}
-	}
-	
-	public static void doFeeder(int intakeSpeed){
-		if(intakeSpeed == 0){
-			intake.set(Relay.Value.kReverse);
-		} else if(intakeSpeed == 1){
-			intake.set(Relay.Value.kOff);
-		} else if(intakeSpeed == 2){
-			intake.set(Relay.Value.kForward);
-		}
-	}
 }

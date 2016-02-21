@@ -76,9 +76,9 @@ public class Auto{
 	
 	public static void defenseStraight(){
 		if(timer.get() < 4){
-			Drive.drive(-0.5, 0);
+			Drive.drive(0.75, -0.25);
 		} else {
-			target();
+			Drive.drive(0, 0);
 		}
 	}
 	
@@ -106,191 +106,79 @@ public class Auto{
 		}
 	}
 	
-	//autonomous program
-	@SuppressWarnings("deprecation")
-	public static void target(){
-
-		grip = NetworkTable.getTable("GRIP/tapeData");
-		midXArray = grip.getNumberArray("centerX", error);
-		midYArray = grip.getNumberArray("centerY", error);
-		heightArray = grip.getNumberArray("height", error);
-		nObjects = midXArray.length;
-		
-		if(programStage == 0){
-			if(nObjects == 1){
-				target = 0;
-				midX = midXArray[target];
-				
-				//align to midpoint x
-				if(midX > 177 && midX < 187){
-					Drive.drive(0, 0);
-					programStage = 1;
-				} else if(midX < 177){
-					Drive.drive(0, 0.58);
-				} else if(midX > 187){
-					Drive.drive(0, -0.58);
-				}
-				
-			} else if(nObjects == 2){
-				//more than 1 goal found
-				widthArray = grip.getNumberArray("width", error);
-				largestWidth = 0;
-				
-				//find optimal target
-				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > largestWidth){
-						largestWidth = widthArray[i];
-						target = i;
-					}
-				}
-				
-				//retrieve midpoint
-				midX = midXArray[target];
-				
-				//align to midpoint x
-				if(midX > 177 && midX < 187){
-					Drive.drive(0, 0);
-					programStage = 1;
-				} else if(midX < 177){
-					Drive.drive(0, 0.58);
-				} else if(midX > 187){
-					Drive.drive(0, -0.58);
-				}
-				
-			} else if(nObjects == 0 || nObjects > 2){
-				programRunning = false;
-				targeting = false;
-				programStage = 0;
-			}
-			
-		} else if(programStage == 1){
-            //align y axis
-            midY = midYArray[target];
-
-            if(Mechanisms.shooterAngle.getAverageVoltage() < 1.15){
-    			Mechanisms.doShooter(0.4);
-    		} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.25){
-    			Mechanisms.doShooter(-0.4);
-    		} else {
-    			Mechanisms.doShooter(0);
-    			programStage = 2;
-    		}
-        } else if(programStage == 2){
-        	//shoot the ball
-        	
-			if(shootBegun == false){
-				shootBegun = true;
-				timeFlag = Mechanisms.timer.get();
-			}
-			
-			if(Mechanisms.timer.get() - timeFlag < 1.5){
-				Mechanisms.rev(1);
-			} else if(Mechanisms.timer.get() - timeFlag < 3.5) {
-				Mechanisms.rev(0);
-				Mechanisms.doFeeder(0);
-			} else {
-				Mechanisms.doFeeder(1);
-				shootBegun = false;
-				programStage = 0;
-				programRunning = false;
-				targeting = false;
-			}
-		}
-	}
-	
 	@SuppressWarnings("deprecation")
 	public static void teleopTarget(){
 		
+		System.out.println("target");
+		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
 		heightArray = grip.getNumberArray("height", error);
 		nObjects = midXArray.length;
 		
-		if(programStage == 0){
-			if(nObjects == 1){
-				target = 0;
-				midX = midXArray[target];
-				
-				//align to midpoint x
-				if(midX > 177 && midX < 187){
-					Mechanisms.rotateSpeed = 0;
-					Mechanisms.driveSpeed = 0;
-					Mechanisms.targeting = false;
-					programStage = 1;
-				} else if(midX < 177){
-					Mechanisms.rotateSpeed = 0.58;
-				} else if(midX > 187){
-					Mechanisms.rotateSpeed = -0.58;
+		if(nObjects == 1){
+			target = 0;
+		} else if(nObjects == 2){
+			//more than 1 goal found
+			widthArray = grip.getNumberArray("width", error);
+			largestWidth = 0;
+			
+			//find optimal target
+			//iterate through both contours
+			for(int i = 0; i <= 1; i++){
+				if(widthArray[i] > largestWidth){
+					largestWidth = widthArray[i];
+					target = i;
 				}
-				
-			} else if(nObjects == 2){
-				//more than 1 goal found
-				widthArray = grip.getNumberArray("width", error);
-				largestWidth = 0;
-				
-				//find optimal target
-				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > largestWidth){
-						largestWidth = widthArray[i];
-						target = i;
-					}
-				}
-				
-				//retrieve midpoint
-				midX = midXArray[target];
-				
-				if(midX > 177 && midX < 187){
-					Mechanisms.rotateSpeed = 0;
-					Mechanisms.driveSpeed = 0;
-					Mechanisms.targeting = false;
-					programStage = 1;
-				} else if(midX < 177){
-					Mechanisms.rotateSpeed = 0.58;
-				} else if(midX > 187){
-					Mechanisms.rotateSpeed = -0.58;
-				}
-				
-			} else if(nObjects == 0 || nObjects > 2){
-				programRunning = false;
-				targeting = false;
-				programStage = 0;
 			}
+		} else {
+			//more than 2 contours
+			//stop the program
+			programStage = 0;
+			programRunning = false;
+		}
+		
+		if(programStage == 0){ //raise shooter to pre-angle
 			
 		} else if(programStage == 1){
-            //align y axis
-            midY = midYArray[target];
-
-            if(Mechanisms.shooterAngle.getAverageVoltage() < 1.15){
-    			Mechanisms.shooterArmSpeed = .4;
-    		} else if(Mechanisms.shooterAngle.getAverageVoltage() > 1.25){
-    			Mechanisms.shooterArmSpeed = -.4;
-    		} else {
-    			Mechanisms.shooterArmSpeed = 0;
-    			programStage = 2;
-    		}
-        } else if(programStage == 2){
-        	//shoot the ball
-        	
-			if(shootBegun == false){
-				shootBegun = true;
-				timeFlag = Mechanisms.timer.get();
+			//get midX values
+			midX = midXArray[target];
+				
+			//align to midpoint x
+			if(midX > 177 && midX < 187){
+				Mechanisms.rotateSpeed = 0;
+				Mechanisms.driveSpeed = 0;
+				programStage = 1; //begin aiming
+			} else if(midX < 177){
+				Mechanisms.rotateSpeed = 0.58;
+			} else if(midX > 187){
+				Mechanisms.rotateSpeed = -0.58;
 			}
 			
-			if(Mechanisms.timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
+		} else if(programStage == 2){ //aim shooter arm
+            midY = midYArray[target];
+            //shooter align code here
+        } else if(programStage == 3){ //shoot the ball
+			if(shootBegun == false){
+				shootBegun = true;
+				timeFlag = timer.get();
+			}
+			
+			if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
 				Mechanisms.wheelSpeed = 1;
-			} else if(Mechanisms.timer.get() - timeFlag < 3.5) {
-				Mechanisms.wheelSpeed = 0;
+			} else if(timer.get() - timeFlag < 3.5) {
+				Mechanisms.wheelSpeed = 1;
 				Mechanisms.feederSpeed = 0;
 			} else { //boulder was fired
+				Mechanisms.wheelSpeed = 0;
 				Mechanisms.feederSpeed = 1; //stop feeder wheel
 				shootBegun = false;
 				programStage = 0;
 				programRunning = false;
 				targeting = false;
 			}
-		}
-		
+		} //ball shoot
 	}
 	
 	public static void porkulus(double time){
@@ -320,7 +208,7 @@ public class Auto{
 	}
 	
 	//sit still
-	private static void nothing(){
+	public static void nothing(){
 		//zero all functions
 		Drive.drive(0, 0);
 		Mechanisms.doShooter(0);
