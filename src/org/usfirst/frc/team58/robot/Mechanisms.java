@@ -19,7 +19,7 @@ public class Mechanisms{
 	public static double driveSpeed;
 	public static double rotateSpeed;
 	
-	private static boolean shooterDone;
+	public static boolean shooterDone;
 	private static boolean collectorDone;
 	
 	public static boolean facingFront;
@@ -319,6 +319,17 @@ public class Mechanisms{
 			shooterOverride = false;
 		}
 		*/
+		
+	}
+	
+	public static void setFeeder(int feederSpeed){
+		if(feederSpeed == 0){
+			feeder.set(Relay.Value.kForward);
+		} else if(feederSpeed == 1){
+			feeder.set(Relay.Value.kOff);
+		} else if(feederSpeed == 2){
+			feeder.set(Relay.Value.kReverse);
+		}
 	}
 	
 }
