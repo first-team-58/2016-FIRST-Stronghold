@@ -141,6 +141,7 @@ public class Mechanisms{
 			feederSpeed = 1;
 		}
 		
+		/*
 		if(Inputs.limitUpCollector.get() == true && shooterArmSpeed < 0){
 			collectorSpeed = 0;
 		}
@@ -148,7 +149,7 @@ public class Mechanisms{
 		if(Inputs.limitDownCollecor.get() == true && collectorSpeed > 0){
 			collectorSpeed = 0;
 		}
-		
+		*/
 		if(Inputs.limitUpShooter.get() == true && shooterArmSpeed > 0){
 			shooterArmSpeed = 0;
 		}
