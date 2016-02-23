@@ -51,13 +51,15 @@ public class Mechanisms{
 		wheelSpeed = 0;
 		feederSpeed = 1;
 		intakeSpeed = 1;
-		
-		//System.out.println("colector" + collectorAngle.getVoltage());
-		//System.out.println("shooter" + Inputs.getShooterAngle());
-		
+		/*
+		System.out.println("colector" + Inputs.collectorAngle.getVoltage());
+		System.out.println("shooter" + Inputs.getShooterAngle());
+		System.out.println(Auto.programRunning);
+		*/
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		doShooterOverride();
+		
 		if(Joysticks.operator.getRawButton(4)){
 			collectorSpeed = -0.85;
 		}
@@ -114,20 +116,25 @@ public class Mechanisms{
 		//---------------------------TELEOP MOTOR CONTROLS-------------------------------//
 		//-------------------------------------------------------------------------------//
 		
-		//soft limits
-		if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
-			collectorSpeed = 0;
-		}
-		
-		if(collectorSpeed < 0){
-			if(Inputs.getCollectorAngle() > 1.12){
-				collectorSpeed = collectorSpeed;
-			} else if(Inputs.getCollectorAngle() > 1.05){
-				collectorSpeed = -0.35;
-			} else {
+		//enable "soft" limits only if sensor is reading
+		if(Inputs.getCollectorAngle() > 0.8){
+			//lower collector limit
+			if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
 				collectorSpeed = 0;
 			}
+			
+			//upper collector limit
+			if(collectorSpeed < 0){
+				if(Inputs.getCollectorAngle() > 1.12){
+					collectorSpeed = collectorSpeed;
+				} else if(Inputs.getCollectorAngle() > 1.05){
+					collectorSpeed = -0.35;
+				} else {
+					collectorSpeed = 0;
+				}
+			}
 		}
+		
 		
 		if(Inputs.getShooterAngle() >  1.83 && Inputs.getShooterAngle() <= 1.88 && shooterArmSpeed > 0){
 			shooterArmSpeed = 0.25;
@@ -149,7 +156,7 @@ public class Mechanisms{
 		if(Inputs.limitDownCollecor.get() == true && collectorSpeed > 0){
 			collectorSpeed = 0;
 		}
-		*/
+		
 		if(Inputs.limitUpShooter.get() == true && shooterArmSpeed > 0){
 			shooterArmSpeed = 0;
 		}
@@ -157,6 +164,7 @@ public class Mechanisms{
 		if(Inputs.limitDownShooter.get() == true && shooterArmSpeed < 0){
 			shooterArmSpeed = 0;
 		}
+		*/
 		
 		//set all motors
 		Inputs.doShooter(shooterArmSpeed);

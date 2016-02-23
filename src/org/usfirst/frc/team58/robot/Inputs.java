@@ -70,6 +70,7 @@ public class Inputs{
 	//move shooter arm
 	public static void doShooter(double shooterArmSpeed){
 		shooterArm.set(shooterArmSpeed);
+		System.out.println(shooterArmSpeed);
 	}
 
 }
