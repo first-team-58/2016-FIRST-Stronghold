@@ -51,23 +51,20 @@ public class Mechanisms{
 		wheelSpeed = 0;
 		feederSpeed = 1;
 		intakeSpeed = 1;
-		/*
-		System.out.println("colector" + Inputs.collectorAngle.getVoltage());
-		System.out.println("shooter" + Inputs.getShooterAngle());
-		System.out.println(Auto.programRunning);
-		*/
+		
+		//System.out.println(Auto.programRunning);
+		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		doShooterOverride();
-		
+		//Raise collector
 		if(Joysticks.operator.getRawButton(4)){
-			collectorSpeed = -0.85;
+			collectorSpeed = -1;
 		}
-		
+		//Lower collector
 		if(Joysticks.operator.getRawButton(3)){
-			collectorSpeed = 0.6;
+			collectorSpeed = 1;
 		}
-		
 		//collector controls
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = 2;
@@ -96,6 +93,9 @@ public class Mechanisms{
 		
 		if(Joysticks.driver.getRawButton(8)){
 			Auto.teleopTarget();
+			Auto.programRunning = true;
+		} else {
+			Auto.programRunning = false;
 		}
 		
 		//override run shooter wheels
@@ -123,6 +123,8 @@ public class Mechanisms{
 				collectorSpeed = 0;
 			}
 			
+			
+			/*
 			//upper collector limit
 			if(collectorSpeed < 0){
 				if(Inputs.getCollectorAngle() > 1.12){
@@ -133,6 +135,8 @@ public class Mechanisms{
 					collectorSpeed = 0;
 				}
 			}
+			
+			*/
 		}
 		
 		

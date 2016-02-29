@@ -107,8 +107,6 @@ public class Auto{
 	
 	public static void teleopTarget(){
 		
-		System.out.println("target");
-		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
@@ -138,7 +136,7 @@ public class Auto{
 		}
 		
 		if(targetStage == 0){ //raise shooter to pre-angle
-			Mechanisms.shooterAim(1, .5, .1);
+			Mechanisms.shooterAim(1.33, .4, .1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
 				targetStage = 1;
@@ -146,27 +144,29 @@ public class Auto{
 		} else if(targetStage == 1){
 			//get midX values
 			midX = midXArray[target];
+			
 				
 			//align to midpoint x
-			if(midX > 177 && midX < 187){
+			if(midX > 188 && midX < 198){
 				Mechanisms.rotateSpeed = 0;
 				Mechanisms.driveSpeed = 0;
 				targetStage = 2; //begin aiming
-			} else if(midX < 177){
+			} else if(midX <= 188){
 				Mechanisms.rotateSpeed = 0.58;
-			} else if(midX > 187){
+			} else if(midX >= 198){
 				Mechanisms.rotateSpeed = -0.58;
 			}
 			
 		} else if(targetStage == 2){ //aim shooter arm
             midY = midYArray[target];
-            //shooter align code here
-            //double angle = m * midY  + b; 
-            /*Mechanisms.shooterAim(angle, .5, .1);
+            //shooter align
+            double angle = (0.00083 * midY)  + 1.1; 
+            System.out.println(angle);
+            Mechanisms.shooterAim(angle, .30, 0.1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
-				programStage = 3;
-			} */
+				targetStage = 3;
+			}
 			
         } else if(targetStage == 3){ //shoot the ball
 			if(shootBegun == false){
@@ -191,8 +191,6 @@ public class Auto{
 	}
 	
 public static void autoTarget(){
-		
-		System.out.println("target");
 		
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);

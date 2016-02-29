@@ -23,15 +23,12 @@ public class Drive {
 	
 	public static void driveTeleop(){
 		
-		if(Robot.frontFacing == true){
-			double rotate = Joysticks.driver.getX() * -1;
-			double drive = Joysticks.driver.getY() * -1;
-			DriveBase.arcadeDrive(drive, rotate);
-		} else {
-			double rotate = Joysticks.driver.getX() * 1;
-			double drive = Joysticks.driver.getY() * 1;
-			DriveBase.arcadeDrive(drive, rotate);
+		double rotate = Joysticks.driver.getX() * -1;
+		double drive = Joysticks.driver.getY() * -1;
+		if(Math.abs(rotate) < 0.1){
+			rotate = 0;
 		}
+		DriveBase.arcadeDrive(drive, rotate);
 		
 	}
 	
