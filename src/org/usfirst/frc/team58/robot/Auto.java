@@ -113,27 +113,7 @@ public class Auto{
 		heightArray = grip.getNumberArray("height", error);
 		nObjects = midXArray.length;
 		
-		if(nObjects == 1){
-			target = 0;
-		} else if(nObjects == 2){
-			//more than 1 goal found
-			widthArray = grip.getNumberArray("width", error);
-			largestWidth = 0;
-			
-			//find optimal target
-			//iterate through both contours
-			for(int i = 0; i <= 1; i++){
-				if(widthArray[i] > largestWidth){
-					largestWidth = widthArray[i];
-					target = i;
-				}
-			}
-		} else {
-			//more than 2 contours
-			//stop the program
-			targetStage = 0;
-			programRunning = false;
-		}
+		
 		
 		if(targetStage == 0){ //raise shooter to pre-angle
 			Mechanisms.shooterAim(1.33, .4, .1);
@@ -141,23 +121,47 @@ public class Auto{
 				Mechanisms.shooterDone = false;
 				targetStage = 1;
 			}
+			
 		} else if(targetStage == 1){
+			if(nObjects == 1){
+				target = 0;
+				targetStage = 2;
+			} else if(nObjects == 2){
+				//more than 1 goal found
+				widthArray = grip.getNumberArray("width", error);
+				largestWidth = 0;
+				
+				//find optimal target
+				//iterate through both contours
+				for(int i = 0; i <= 1; i++){
+					if(widthArray[i] > largestWidth){
+						largestWidth = widthArray[i];
+						target = i;
+					}
+				}
+				targetStage = 2;
+			} else {
+				//more than 2 contours
+				//stop the program
+				targetStage = 0;
+				programRunning = false;
+			}
+		} else if(targetStage == 2){
 			//get midX values
 			midX = midXArray[target];
 			
-				
 			//align to midpoint x
-			if(midX > 188 && midX < 198){
+			if(midX > 186 && midX < 196){
 				Mechanisms.rotateSpeed = 0;
 				Mechanisms.driveSpeed = 0;
-				targetStage = 2; //begin aiming
-			} else if(midX <= 188){
+				targetStage = 3; //begin aiming
+			} else if(midX <= 186){
 				Mechanisms.rotateSpeed = 0.58;
-			} else if(midX >= 198){
+			} else if(midX >= 196){
 				Mechanisms.rotateSpeed = -0.58;
 			}
 			
-		} else if(targetStage == 2){ //aim shooter arm
+		} else if(targetStage == 3){ //aim shooter arm
             midY = midYArray[target];
             //shooter align
             double angle = (0.00083 * midY)  + 1.1; 
@@ -165,15 +169,13 @@ public class Auto{
             Mechanisms.shooterAim(angle, .30, 0.1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
-				targetStage = 3;
+				targetStage = 4;
 			}
-			
-        } else if(targetStage == 3){ //shoot the ball
+        } else if(targetStage == 4){ //shoot the ball
 			if(shootBegun == false){
 				shootBegun = true;
 				timeFlag = timer.get();
 			}
-			
 			if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
 				Mechanisms.wheelSpeed = 1;
 			} else if(timer.get() - timeFlag < 3.5) {

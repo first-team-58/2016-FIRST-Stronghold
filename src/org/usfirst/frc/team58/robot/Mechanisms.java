@@ -72,6 +72,8 @@ public class Mechanisms{
 			wheelSpeed = -0.35;
 		}
 		
+		System.out.println("collector" + Inputs.getCollectorAngle());
+		
 		//auto collection angle
 		if(Joysticks.operator.getRawButton(2)){
 			if(collectorAiming == false && Auto.programRunning == false){
@@ -123,8 +125,6 @@ public class Mechanisms{
 				collectorSpeed = 0;
 			}
 			
-			
-			/*
 			//upper collector limit
 			if(collectorSpeed < 0){
 				if(Inputs.getCollectorAngle() > 1.12){
@@ -136,7 +136,6 @@ public class Mechanisms{
 				}
 			}
 			
-			*/
 		}
 		
 		
