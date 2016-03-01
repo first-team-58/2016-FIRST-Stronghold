@@ -44,7 +44,7 @@ public class Auto{
 			case 0:
 				nothing();
 			case 1:
-				collectorReset();
+				reset();
 			case 2:
 				lowBarShoot();
 			case 3:
@@ -53,8 +53,8 @@ public class Auto{
 		}
 	}
 	
-	public static void collectorReset(){
-		//raise collector to 90 degrees for start of match
+	public static void reset(){
+		//raise arms for start of match
 	}
 	
 	public static void lowBarShoot(){
@@ -113,8 +113,6 @@ public class Auto{
 		heightArray = grip.getNumberArray("height", error);
 		nObjects = midXArray.length;
 		
-		
-		
 		if(targetStage == 0){ //raise shooter to pre-angle
 			Mechanisms.shooterAim(1.33, .4, .1);
 			if(Mechanisms.shooterDone == true){
@@ -141,10 +139,9 @@ public class Auto{
 				}
 				targetStage = 2;
 			} else {
-				//more than 2 contours
-				//stop the program
-				targetStage = 0;
-				programRunning = false;
+				//more than 2 or 0 contours found
+				//reiterate
+				targetStage = 1;
 			}
 		} else if(targetStage == 2){
 			//get midX values
@@ -165,12 +162,12 @@ public class Auto{
             midY = midYArray[target];
             //shooter align
             double angle = (0.00083 * midY)  + 1.1; 
-            System.out.println(angle);
             Mechanisms.shooterAim(angle, .30, 0.1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
 				targetStage = 4;
 			}
+			
         } else if(targetStage == 4){ //shoot the ball
 			if(shootBegun == false){
 				shootBegun = true;

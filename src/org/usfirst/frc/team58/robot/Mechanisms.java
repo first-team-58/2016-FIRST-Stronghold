@@ -248,7 +248,22 @@ public class Mechanisms{
 		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 		Inputs.shooterWheelRight.set(shooterWheelSpeed);
 		
-		/*
+		/* RAISE SPEED TO COMPENSATE
+		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
+			//find ratio of revolutions
+			differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
+			//set new speed adjusted to ratio
+			Inputs.shooterWheelRight.set(-shooterWheelSpeed * differential);
+			Inputs.shooterWheelLeft.set(shooterWheelSpeed);
+		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
+			//find ratio of revolutions
+			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
+			//set new speed adjusted to ratio
+			Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
+			Inputs.shooterWheelRight.set(-shooterWheelSpeed);
+		} */
+		
+		/* DROP SPEED TO COMPENSTATE (wrong?)
 		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
 			//find ratio of revolutions
 			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
@@ -262,7 +277,9 @@ public class Mechanisms{
 			Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 			Inputs.shooterWheelRight.set(-shooterWheelSpeed * differential);
 		}
+		*/
 		
+		/*
 		//check for motor stall
 		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(Inputs.encoderShooterRight.getRate()) < 10)  || (Math.abs(Inputs.encoderShooterRight.getRate()) < 10) )){
