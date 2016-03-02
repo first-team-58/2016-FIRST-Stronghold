@@ -148,13 +148,13 @@ public class Auto{
 			midX = midXArray[target];
 			
 			//align to midpoint x
-			if(midX > 186 && midX < 196){
+			if(midX > 194 && midX < 204){
 				Mechanisms.rotateSpeed = 0;
 				Mechanisms.driveSpeed = 0;
 				targetStage = 3; //begin aiming
-			} else if(midX <= 186){
+			} else if(midX <= 194){
 				Mechanisms.rotateSpeed = 0.58;
-			} else if(midX >= 196){
+			} else if(midX >= 204){
 				Mechanisms.rotateSpeed = -0.58;
 			}
 			
@@ -162,7 +162,7 @@ public class Auto{
             midY = midYArray[target];
             //shooter align
             double angle = (0.00083 * midY)  + 1.1; 
-            Mechanisms.shooterAim(angle, .30, 0.1);
+            Mechanisms.shooterAim(1.174, .30, 0.1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
 				targetStage = 4;

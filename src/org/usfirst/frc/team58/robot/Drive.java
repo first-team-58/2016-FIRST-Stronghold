@@ -15,6 +15,7 @@ public class Drive {
 	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void init(){
+		//init encoders
 	}
 	
 	public static void reset(){

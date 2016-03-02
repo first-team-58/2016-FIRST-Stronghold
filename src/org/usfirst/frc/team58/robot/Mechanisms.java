@@ -41,6 +41,7 @@ public class Mechanisms{
 		driveSpeed = 0;
 		rotateSpeed = 0;
 		facingFront = true;
+		
 	}
 	
 	public static void doTeleop(){
@@ -72,8 +73,6 @@ public class Mechanisms{
 			wheelSpeed = -0.35;
 		}
 		
-		System.out.println("collector" + Inputs.getCollectorAngle());
-		
 		//auto collection angle
 		if(Joysticks.operator.getRawButton(2)){
 			if(collectorAiming == false && Auto.programRunning == false){
@@ -102,7 +101,7 @@ public class Mechanisms{
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5)){
-			wheelSpeed = 1;
+			wheelSpeed = .8;
 		} //do not put an else block here
 		
 		//stop rev if button not pressed only during shooter override
@@ -248,36 +247,29 @@ public class Mechanisms{
 		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 		Inputs.shooterWheelRight.set(shooterWheelSpeed);
 		
-		/* RAISE SPEED TO COMPENSATE
-		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
-			//find ratio of revolutions
-			differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
-			//set new speed adjusted to ratio
-			Inputs.shooterWheelRight.set(-shooterWheelSpeed * differential);
-			Inputs.shooterWheelLeft.set(shooterWheelSpeed);
-		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
-			//find ratio of revolutions
-			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
-			//set new speed adjusted to ratio
-			Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
-			Inputs.shooterWheelRight.set(-shooterWheelSpeed);
-		} */
+		System.out.println("left" + Inputs.encoderShooterLeft.getRate());
+		System.out.println("right" + Inputs.encoderShooterRight.getRate());
 		
-		/* DROP SPEED TO COMPENSTATE (wrong?)
+		
+		// RAISE SPEED TO COMPENSATE
 		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
-			//find ratio of revolutions
-			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
-			//set new speed adjusted to ratio
-			Inputs.shooterWheelRight.set(-shooterWheelSpeed);
-			Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
-		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
 			//find ratio of revolutions
 			differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
 			//set new speed adjusted to ratio
-			Inputs.shooterWheelLeft.set(shooterWheelSpeed);
-			Inputs.shooterWheelRight.set(-shooterWheelSpeed * differential);
+			if(differential > 1.1){
+				Inputs.shooterWheelRight.set(shooterWheelSpeed * differential);
+				Inputs.shooterWheelLeft.set(shooterWheelSpeed);
+			}
+		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
+			//find ratio of revolutions
+			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
+			//set new speed adjusted to ratio
+			if(differential > 1.1){
+				Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
+				Inputs.shooterWheelRight.set(shooterWheelSpeed);
+			}
 		}
-		*/
+		
 		
 		/*
 		//check for motor stall
