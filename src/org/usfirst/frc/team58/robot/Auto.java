@@ -162,14 +162,18 @@ public class Auto{
 			}
 			
 		} else if(targetStage == 3){ //aim shooter arm
-            midY = midYArray[target];
-            //shooter align
-            double angle = (0.00083 * midY)  + 1.1; 
-            Mechanisms.shooterAim(1.174, .48, 0.1);
-			if(Mechanisms.shooterDone == true){
-				Mechanisms.shooterDone = false;
-				targetStage = 4;
-			}
+            
+            if(nObjects > 0 && nObjects < target + 2){ //only shoot if the target is defined
+            	//shooter align
+                double angle = (0.00083 * midYArray[target])  + 1.1; 
+                Mechanisms.shooterAim(1.174, .48, 0.1);
+    			if(Mechanisms.shooterDone == true){
+    				Mechanisms.shooterDone = false;
+    				targetStage = 4;
+    			}
+            } else {
+            	targetStage = 3;
+            }
 			
         } else if(targetStage == 4){ //shoot the ball
 			if(shootBegun == false){

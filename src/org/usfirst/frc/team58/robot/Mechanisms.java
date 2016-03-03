@@ -53,11 +53,9 @@ public class Mechanisms{
 		feederSpeed = 1;
 		intakeSpeed = 1;
 		
-		//System.out.println(Auto.programRunning);
-		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
-		doShooterOverride();
+		doShooterOperator();
 		//Raise collector
 		if(Joysticks.operator.getRawButton(4)){
 			collectorSpeed = -1;
@@ -73,37 +71,11 @@ public class Mechanisms{
 			wheelSpeed = -0.35;
 		}
 		
-		
 		//auto collection angle
 		if(Joysticks.operator.getRawButton(2)){
-			if(Inputs.getShooterAngle() < (1.94 - 0.1/2)){
-				shooterArmSpeed = 0.3;
-			} else if(Inputs.getShooterAngle() > (1.94 + 0.1/2)){
-				shooterArmSpeed = -0.3;
-			} else {
-				shooterArmSpeed = 0;
-				shooterDone = true;
-			}
-			/*
-			if(Inputs.getCollectorAngle() > 0.8){
-				if(Inputs.getCollectorAngle() < (1.63 - 0.15/2)){
-					collectorSpeed = 0.5;
-				} else if(Inputs.getShooterAngle() > (1.63 + 0.15/2)){
-					collectorSpeed = -0.5;
-				} else {
-					collectorSpeed = 0;
-					collectorDone = true;
-				}
-			}**/
-			
-			collectorAiming = true;
-			Auto.programRunning  = true;
-		}
-		
-		if(shooterDone == true){
-			collectorAiming = false;
-			Auto.programRunning = false;
-			shooterDone = false;
+			shooterAim(1.94, 0.3, 0.1);
+			collectorAim(1.63, 0.5, 0.15);
+			//could put wheels in here too
 		}
 		
 		if(Joysticks.driver.getRawButton(8)){
@@ -123,15 +95,14 @@ public class Mechanisms{
 			rev = false;
 		}
 		
-		//override fire boulder
+		//spin feeder wheels to fire boulder
 		if(Joysticks.operator.getRawButton(6) && rev == true){
 			feederSpeed = 0;
 		}
 		
 		//---------------------------TELEOP MOTOR CONTROLS-------------------------------//
-		//-------------------------------------------------------------------------------//
 		
-		//enable "soft" limits only if sensor is reading
+		//enable limits only if sensor is reading
 		if(Inputs.getCollectorAngle() > 0.8){
 			//lower collector limit
 			if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
@@ -151,7 +122,7 @@ public class Mechanisms{
 			
 		}
 		
-		
+		//shooter arm lower limit
 		if(Inputs.getShooterAngle() >  1.83 && Inputs.getShooterAngle() <= 1.88 && shooterArmSpeed > 0){
 			shooterArmSpeed = 0.25;
 		} else if(Inputs.getShooterAngle() > 1.88 && shooterArmSpeed > 0){
@@ -183,16 +154,11 @@ public class Mechanisms{
 		*/
 		
 		//set all motors
+		setWheels(wheelSpeed);
 		Inputs.doShooter(shooterArmSpeed);
 		Inputs.doCollector(collectorSpeed);
-		setWheels(wheelSpeed);
 		Inputs.setFeeder(feederSpeed);
 		Inputs.setIntake(intakeSpeed);
-		
-		if(Auto.porkulusRunning == true){
-			//stop teleop driving
-			Auto.programRunning = true;
-		}
 		
 		if(Auto.programRunning == true){
 			Drive.drive(driveSpeed, rotateSpeed);
@@ -201,8 +167,7 @@ public class Mechanisms{
 	}
 	
 	//control shooter arm during override
-	private static void doShooterOverride(){
-		
+	private static void doShooterOperator(){
 		//control shooter arm via analog stick override
 		if(Auto.programRunning == false){
 			double armSpeed = Joysticks.operator.getY() * 0.5;
@@ -210,18 +175,6 @@ public class Mechanisms{
 				armSpeed = 0;
 			}
 			shooterArmSpeed = armSpeed;
-		}
-	}
-	
-	private static void stage(double collectorValue, double collectorSpeed, double collectorDeadband, double shooterValue, double shooterSpeed, double shooterDeadband){
-		
-		if(Auto.programRunning == true){
-			collectorAim(collectorValue, collectorSpeed, collectorDeadband);
-			shooterAim(shooterValue, shooterSpeed, shooterDeadband);
-		}
-			
-		if(shooterDone == true && collectorDone == true){
-			Auto.programRunning = false;
 		}
 	}
 	
@@ -237,13 +190,15 @@ public class Mechanisms{
 	}
 	
 	private static void collectorAim(double value, double speed, double deadband){
-		if(Inputs.getCollectorAngle() < (value - deadband/2)){
-			collectorSpeed = speed;
-		} else if(Inputs.getShooterAngle() > (value + deadband/2)){
-			collectorSpeed = speed * -1;
-		} else {
-			collectorSpeed = 0;
-			collectorDone = true;
+		if(Inputs.getCollectorAngle() > 0.8){
+			if(Inputs.getCollectorAngle() < (value - deadband/2)){
+				collectorSpeed = speed;
+			} else if(Inputs.getShooterAngle() > (value + deadband/2)){
+				collectorSpeed = speed * -1;
+			} else {
+				collectorSpeed = 0;
+				collectorDone = true;
+			}
 		}
 	}
 	
@@ -264,28 +219,27 @@ public class Mechanisms{
 		System.out.println("left" + Inputs.encoderShooterLeft.getRate());
 		System.out.println("right" + Inputs.encoderShooterRight.getRate());
 		
-		
-		// RAISE SPEED TO COMPENSATE
-		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
-			//find ratio of revolutions
-			differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
-			//set new speed adjusted to ratio
-			if(differential > 1.1){
-				Inputs.shooterWheelRight.set(shooterWheelSpeed * differential);
-				Inputs.shooterWheelLeft.set(shooterWheelSpeed);
-			}
-		} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
-			//find ratio of revolutions
-			differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
-			//set new speed adjusted to ratio
-			if(differential > 1.1){
-				Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
-				Inputs.shooterWheelRight.set(shooterWheelSpeed);
+		//only enable corrections above a certain rpm
+		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > 20000 && Math.abs(Inputs.encoderShooterRight.getRate()) > 20000){
+			// RAISE SPEED TO COMPENSATE
+			if(Math.abs(Inputs.encoderShooterLeft.getRate()) > Math.abs(Inputs.encoderShooterRight.getRate())){
+				//find ratio of revolutions
+				differential = Inputs.encoderShooterLeft.getRate() / Inputs.encoderShooterRight.getRate();
+				//set new speed adjusted to ratio
+				if(differential > 1.1){
+					Inputs.shooterWheelRight.set(shooterWheelSpeed * differential);
+					Inputs.shooterWheelLeft.set(shooterWheelSpeed);
+				}
+			} else if(Math.abs(Inputs.encoderShooterRight.getRate()) > Math.abs(Inputs.encoderShooterLeft.getRate())){
+				//find ratio of revolutions
+				differential = Inputs.encoderShooterRight.getRate() / Inputs.encoderShooterLeft.getRate();
+				//set new speed adjusted to ratio
+				if(differential > 1.1){
+					Inputs.shooterWheelLeft.set(shooterWheelSpeed * differential);
+					Inputs.shooterWheelRight.set(shooterWheelSpeed);
+				}
 			}
 		}
-		
-		
-		/*
 		//check for motor stall
 		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(Inputs.encoderShooterRight.getRate()) < 10)  || (Math.abs(Inputs.encoderShooterRight.getRate()) < 10) )){
@@ -293,7 +247,6 @@ public class Mechanisms{
 			Inputs.shooterWheelLeft.set(0);
 			Inputs.shooterWheelRight.set(0);
 		}
-		*/
 		
 	}
 	
