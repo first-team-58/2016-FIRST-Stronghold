@@ -73,20 +73,34 @@ public class Mechanisms{
 			wheelSpeed = -0.35;
 		}
 		
+		
 		//auto collection angle
 		if(Joysticks.operator.getRawButton(2)){
-			if(collectorAiming == false && Auto.programRunning == false){
-				collectorAiming = true;
-				Auto.programRunning = true;
+			if(Inputs.getShooterAngle() < (1.94 - 0.1/2)){
+				shooterArmSpeed = 0.3;
+			} else if(Inputs.getShooterAngle() > (1.94 + 0.1/2)){
+				shooterArmSpeed = -0.3;
+			} else {
+				shooterArmSpeed = 0;
+				shooterDone = true;
 			}
+			/*
+			if(Inputs.getCollectorAngle() > 0.8){
+				if(Inputs.getCollectorAngle() < (1.63 - 0.15/2)){
+					collectorSpeed = 0.5;
+				} else if(Inputs.getShooterAngle() > (1.63 + 0.15/2)){
+					collectorSpeed = -0.5;
+				} else {
+					collectorSpeed = 0;
+					collectorDone = true;
+				}
+			}**/
+			
+			collectorAiming = true;
+			Auto.programRunning  = true;
 		}
 		
-		if(collectorAiming == true){
-			collectorAim(1.63, 0.5, 0.15);
-			shooterAim(1.94, 0.3, 0.1);
-		}
-		
-		if(shooterDone == true && collectorDone == true){
+		if(shooterDone == true){
 			collectorAiming = false;
 			Auto.programRunning = false;
 			shooterDone = false;

@@ -114,7 +114,7 @@ public class Auto{
 		nObjects = midXArray.length;
 		
 		if(targetStage == 0){ //raise shooter to pre-angle
-			Mechanisms.shooterAim(1.33, .4, .1);
+			Mechanisms.shooterAim(1.33, .55, .1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
 				targetStage = 1;
@@ -141,28 +141,31 @@ public class Auto{
 			} else {
 				//more than 2 or 0 contours found
 				//reiterate
-				targetStage = 1;
+				shootBegun = false;
+				targetStage = 0;
+				programRunning = false;
+				targeting = false;
 			}
 		} else if(targetStage == 2){
 			//get midX values
 			midX = midXArray[target];
 			
 			//align to midpoint x
-			if(midX > 194 && midX < 204){
+			if(midX > 192 && midX < 202){
 				Mechanisms.rotateSpeed = 0;
 				Mechanisms.driveSpeed = 0;
 				targetStage = 3; //begin aiming
-			} else if(midX <= 194){
-				Mechanisms.rotateSpeed = 0.58;
-			} else if(midX >= 204){
-				Mechanisms.rotateSpeed = -0.58;
+			} else if(midX <= 192){
+				Mechanisms.rotateSpeed = 0.6;
+			} else if(midX >= 202){
+				Mechanisms.rotateSpeed = -0.6;
 			}
 			
 		} else if(targetStage == 3){ //aim shooter arm
             midY = midYArray[target];
             //shooter align
             double angle = (0.00083 * midY)  + 1.1; 
-            Mechanisms.shooterAim(1.174, .30, 0.1);
+            Mechanisms.shooterAim(1.174, .48, 0.1);
 			if(Mechanisms.shooterDone == true){
 				Mechanisms.shooterDone = false;
 				targetStage = 4;
