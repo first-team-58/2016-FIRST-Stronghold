@@ -53,6 +53,8 @@ public class Mechanisms{
 		feederSpeed = 1;
 		intakeSpeed = 1;
 		
+		System.out.println(Inputs.getCollectorAngle());
+		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		doShooterOperator();
@@ -64,18 +66,29 @@ public class Mechanisms{
 		if(Joysticks.operator.getRawButton(3)){
 			collectorSpeed = 1;
 		}
-		//collector controls
+		
+		//aim to shooting height
 		if(Joysticks.operator.getRawButton(1)){
+			//shooterAim(1.94, 0.3, 0.1);
+			//collectorAim(1.63, 0.5, 0.15);
+			//spins all wheel
 			intakeSpeed = 2;
 			feederSpeed = 2;
 			wheelSpeed = -0.35;
 		}
 		
-		//auto collection angle
+		if(Joysticks.operator.getThrottle() > 0){
+			shooterAim(1.174, 0.5, 0.15);
+		}
+		
+		//auto collection angle and collector controls
 		if(Joysticks.operator.getRawButton(2)){
 			shooterAim(1.94, 0.3, 0.1);
 			collectorAim(1.63, 0.5, 0.15);
-			//could put wheels in here too
+			//spins all wheel
+			intakeSpeed = 2;
+			feederSpeed = 2;
+			wheelSpeed = -0.35;
 		}
 		
 		if(Joysticks.driver.getRawButton(8)){

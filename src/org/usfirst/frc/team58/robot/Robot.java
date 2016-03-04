@@ -62,7 +62,7 @@ public class Robot extends IterativeRobot {
     
     //initialize autonomous and retrieve program selection from SmartDashboard
     //you can open SmartDashboard in Eclipse: WPILib->Run SmartDashboard
-    private static int program;
+    private static int program = 0;
     public void autonomousInit() {
     	
     	//retrieve autonomous selection from the SmartDashboard
@@ -88,6 +88,7 @@ public class Robot extends IterativeRobot {
         Mechanisms.doTeleop();
         
         SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
+        SmartDashboard.putNumber("collector ", Inputs.getCollectorAngle());
         LiveWindow.run();
         
         if(Joysticks.driver.getRawButton(6)){
