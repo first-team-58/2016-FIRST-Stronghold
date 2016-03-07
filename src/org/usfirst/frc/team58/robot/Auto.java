@@ -23,6 +23,8 @@ public class Auto{
 	private static double largestWidth;
 	private static double distance;
 	
+	private static double initGyro;
+	
 	//program variable
 	public static boolean porkulusRunning = false;
 	public static boolean programRunning = false;
@@ -32,10 +34,13 @@ public class Auto{
 	private static boolean shootBegun = false;
 	public static boolean targeting = false;
 	
+	public static double errorConstant = -0.2;
+	
 	private static double[] error = {-1};
 	
 	public static void init(){
 		timer.start();
+		initGyro = Inputs.gyro.getAngle();
 	}
 	
 	public static void run(int program){
@@ -43,64 +48,61 @@ public class Auto{
 		switch(program){
 			case 0:
 				nothing();
+				break;
 			case 1:
 				reset();
+				break;
 			case 2:
 				lowBarShoot();
+				break;
 			case 3:
 				defenseStraight();
-			break;
+				break;
+			case 4:
+				portcullus();
+				break;
+			default:
+				nothing();
+				break;
 		}
 	}
 	
 	public static void reset(){
 		//raise arms for start of match
+		Mechanisms.collectorAim(1, 0.25, 0.3);
 	}
 	
 	public static void lowBarShoot(){
 		//go through low bar, turn right and shoot
-		if(timer.get() < 4){
-			Drive.drive(-0.5, 0);
-		} else if(timer.get() < 4.5){
-			Drive.drive(0, -0.7);
-		} else if(timer.get() < 6.7){
-			Drive.drive(-0.5, 0);
-		} else if(timer.get() < 7.2){
-			Drive.drive(0, 0.8);
+		
+		if(Inputs.getShooterAngle() < 1.8){
+			Mechanisms.shooterAim(1.92, 0.2, 0.1);
 		} else {
-			autoTarget();
+			Mechanisms.shooterController.disable();
 		}
+		
+		if(Inputs.getCollectorAngle() < 1.54){
+			Mechanisms.collectorAim(1.59, 0.3, 0.15);
+		} else {
+			Mechanisms.collectorController.disable();
+		}
+		
+		 if(timer.get() < 4){
+			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(0.75, delta * errorConstant);
+		}
+		
 	}
 	
 	public static void defenseStraight(){
-		if(timer.get() < 4){
-			Drive.drive(0.75, -0.25);
-		} else {
-			Drive.drive(0, 0);
-		}
-	}
-	
-	public static void defenseLeft(){
-		if(timer.get() < 4){
-			//drive straight over defense
-			Drive.drive(-0.5, 0);
-		} else if(timer.get() < 4.5){
-			//rotate left half second
-			Drive.drive(0, 0.5);
-		} else {
-			autoTarget();
-		}
-	}
-	
-	public static void defenseRight(){
-		if(timer.get() < 4){
-			//drive straight over defense
-			Drive.drive(-0.5, 0);
-		} else if(timer.get() < 4.5){
-			//rotate right half second
-			Drive.drive(0, -0.5);
-		} else {
-			autoTarget();
+		if(timer.get() < 1.2){
+			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(0.75, delta * errorConstant);
+		} else if(timer.get() < 1.6){
+			Drive.drive(-1, 0);
+		} else if(timer.get() < 4.6){
+			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(1, -0.3);
 		}
 	}
 	
@@ -124,6 +126,7 @@ public class Auto{
 			if(nObjects == 1){
 				target = 0;
 				targetStage = 2;
+				//find target gyro voltage from midx
 			} else if(nObjects == 2){
 				//more than 1 goal found
 				widthArray = grip.getNumberArray("width", error);
@@ -282,16 +285,16 @@ public static void autoTarget(){
 		} //ball shoot
 	}
 	
-	public static void porkulus(double time){
-
+	public static void portcullus(){
+/*
 		if(Inputs.getCollectorAngle() < 2.16 && programStage == 0){
 			Mechanisms.collectorSpeed = 0.5;
 		} else if(programStage == 0){
 			programStage = 1;
 			timeFlag = Mechanisms.timer.get();
 		} else if(programStage == 1 && (Mechanisms.timer.get() - timeFlag) < 2.5){
-			Mechanisms.driveSpeed = 0.5;
-			Mechanisms.collectorSpeed = 0;
+			Drive.drive(0.5, 0);
+			
 		} else if(programStage == 1){
 			Mechanisms.driveSpeed = 0;
 			programStage = 2;
@@ -306,6 +309,19 @@ public static void autoTarget(){
 			programRunning = false;
 			programStage = 0;
 		}
+	*/
+		
+		if(timer.get() < 1.2){
+			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(0.75, delta * errorConstant);
+		} else if(timer.get() < 4.4){
+			Drive.drive(0.4, 0);
+			Inputs.doCollector(-0.7);
+		} else{
+			Drive.drive(0, 0);
+			Inputs.doCollector(0);
+		}
+		
 	}
 	
 	//sit still

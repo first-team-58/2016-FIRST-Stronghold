@@ -36,12 +36,24 @@ public class Robot extends IterativeRobot {
     
     public void robotInit() {
     	
+    	//autonomous
     	autoChooser = new SendableChooser();
         autoChooser.addDefault("nothing", 0);
         autoChooser.addDefault("collector reset", 1);
         autoChooser.addDefault("Low bar", 2);
         autoChooser.addDefault("defense straight", 3);
+        autoChooser.addDefault("portcullis", 4);
         SmartDashboard.putData("Auto choices", autoChooser);
+        
+        //collector PID
+        SmartDashboard.putNumber("CP", 0);
+        SmartDashboard.putNumber("CI", 0);
+        SmartDashboard.putNumber("CD", 0);
+        
+        //shooter PID
+        SmartDashboard.putNumber("SP", 0);
+        SmartDashboard.putNumber("SI", 0);
+        SmartDashboard.putNumber("SD", 0);
     	
         //USB camera setup
     	frontFacing = true;
@@ -55,14 +67,25 @@ public class Robot extends IterativeRobot {
     	ipServer.setQuality(50);
     	ipServer.startAutomaticCapture("cam1");
     	
-        Auto.init();
+    	//calibrate sensors
+    	SmartDashboard.putBoolean("calibrate", false);
+    	
         Mechanisms.init();
         Drive.init();
     }
     
+    private static void calibrateSensors(){
+    	
+    }
+    
+    public void teleopInit(){
+    	System.out.println("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+    	
+    }
+    
     //initialize autonomous and retrieve program selection from SmartDashboard
     //you can open SmartDashboard in Eclipse: WPILib->Run SmartDashboard
-    private static int program = 0;
+    public static int program;
     public void autonomousInit() {
     	
     	//retrieve autonomous selection from the SmartDashboard
@@ -79,16 +102,21 @@ public class Robot extends IterativeRobot {
     }
     
     public void autonomousPeriodic() {
-    	Auto.nothing();
+    	System.out.println(Inputs.gyro.getAngle());
+    	Auto.run(program);
     }
     
     public void teleopPeriodic() {
-
+    	System.out.println(Inputs.gyro.getAngle());
+    	//calibrate sensors
+    	
+    	
     	Drive.driveTeleop();
         Mechanisms.doTeleop();
         
-        SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
-        SmartDashboard.putNumber("collector ", Inputs.getCollectorAngle());
+        //debugging
+        SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());
+        SmartDashboard.putNumber("collector ", Inputs.collectorAngle.getAverageVoltage());
         LiveWindow.run();
         
         if(Joysticks.driver.getRawButton(6)){

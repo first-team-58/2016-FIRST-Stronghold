@@ -26,9 +26,14 @@ public class Drive {
 		
 		double rotate = Joysticks.driver.getX() * -1;
 		double drive = Joysticks.driver.getY() * -1;
+		if(Joysticks.driver.getTwist() > 0){
+			rotate = rotate * 0.65;
+			drive = drive * 0.5;
+		}
 		if(Math.abs(rotate) < 0.1){
 			rotate = 0;
 		}
+		
 		DriveBase.arcadeDrive(drive, rotate);
 		
 	}

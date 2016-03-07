@@ -3,9 +3,12 @@ package org.usfirst.frc.team58.robot;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.filters.LinearDigitalFilter;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Mechanisms{
 	
@@ -29,6 +32,17 @@ public class Mechanisms{
 	public static boolean targeting;
 	private static boolean rev;
 	
+	private static double[] ffGains = {1};
+	private static double[] fbGains = {1};
+	
+	//PID filters
+	//public static LinearDigitalFilter collectorAngleFilter = new LinearDigitalFilter(Inputs.collectorAngle, ffGains, fbGains);
+	//public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(Inputs.shooterAngle, null, null);
+	
+	//PID controllers
+	public static PIDController shooterController = new PIDController(2, 0, 0.0, Inputs.shooterAngle, Inputs.shooterArm);
+	public static PIDController collectorController = new PIDController(13, 0, 0.0, Inputs.collectorAngle, Inputs.collector);
+
 	public static Timer timer = new Timer();
 	
 	public static void init(){
@@ -41,7 +55,6 @@ public class Mechanisms{
 		driveSpeed = 0;
 		rotateSpeed = 0;
 		facingFront = true;
-		
 	}
 	
 	public static void doTeleop(){
@@ -52,19 +65,21 @@ public class Mechanisms{
 		wheelSpeed = 0;
 		feederSpeed = 1;
 		intakeSpeed = 1;
-		
-		System.out.println(Inputs.getCollectorAngle());
+
+		//PID tuning
+		//collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
+		//shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
 		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		doShooterOperator();
 		//Raise collector
 		if(Joysticks.operator.getRawButton(4)){
-			collectorSpeed = -1;
+			collectorSpeed = -0.75;
 		}
 		//Lower collector
 		if(Joysticks.operator.getRawButton(3)){
-			collectorSpeed = 1;
+			collectorSpeed = 0.75;
 		}
 		
 		//aim to shooting height
@@ -78,17 +93,23 @@ public class Mechanisms{
 		}
 		
 		if(Joysticks.operator.getThrottle() > 0){
-			shooterAim(1.174, 0.5, 0.15);
+			System.out.println(Inputs.getShooterAngle());
+			if(Inputs.getShooterAngle() < 1.174 - 0.05){
+				shooterArmSpeed = 0.45;
+			} else if(Inputs.getShooterAngle() > 1.174 + 0.05){
+				shooterArmSpeed = -0.45;
+			} else {
+				shooterArmSpeed = 0;
+			}
 		}
 		
 		//auto collection angle and collector controls
 		if(Joysticks.operator.getRawButton(2)){
-			shooterAim(1.94, 0.3, 0.1);
-			collectorAim(1.63, 0.5, 0.15);
-			//spins all wheel
-			intakeSpeed = 2;
-			feederSpeed = 2;
-			wheelSpeed = -0.35;
+			shooterAim(1.91, 0.25, 0.1);
+			collectorAim(1.59, 0.5, 0.15);
+		} else {
+			shooterController.disable();
+			collectorController.disable();
 		}
 		
 		if(Joysticks.driver.getRawButton(8)){
@@ -121,18 +142,44 @@ public class Mechanisms{
 			if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
 				collectorSpeed = 0;
 			}
-			
-			//upper collector limit
-			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() > 1.12){
-					collectorSpeed = collectorSpeed;
-				} else if(Inputs.getCollectorAngle() > 1.05){
-					collectorSpeed = -0.35;
-				} else {
-					collectorSpeed = 0;
+		}
+		
+		//ensure both sensors are operational
+		/*if(Inputs.getCollectorAngle() > 0.8){
+			//upper collector limit when shooter is down
+			if(Inputs.getShooterAngle() > 1.26){
+				if(collectorSpeed < 0){
+					if(Inputs.getCollectorAngle() > 1.22){
+						collectorSpeed = collectorSpeed;
+					} else if(Inputs.getCollectorAngle() > 1.15){
+						collectorSpeed = -0.35;
+					} else {
+						collectorSpeed = 0;
+					}
+				}
+			} else { //upper collector limit when shooter is up
+				if(collectorSpeed < 0){
+					if(Inputs.getCollectorAngle() > 1.22){
+						collectorSpeed = collectorSpeed;
+					} else if(Inputs.getCollectorAngle() > 1.15){
+						collectorSpeed = -0.35;
+					} else {
+						collectorSpeed = 0;
+					}
 				}
 			}
-			
+		} */
+		
+		if(Inputs.getCollectorAngle() > 0.8){
+				if(collectorSpeed < 0){
+					if(Inputs.getCollectorAngle() > 1.12){
+						collectorSpeed = collectorSpeed;
+					} else if(Inputs.getCollectorAngle() > 1.05){
+						collectorSpeed = -0.35;
+					} else {
+						collectorSpeed = 0;
+					}
+				}
 		}
 		
 		//shooter arm lower limit
@@ -148,23 +195,21 @@ public class Mechanisms{
 			feederSpeed = 1;
 		}
 		
-		/*
-		if(Inputs.limitUpCollector.get() == true && shooterArmSpeed < 0){
+		if(Inputs.limitUpCollector.get() == false && collectorSpeed < 0){
 			collectorSpeed = 0;
 		}
 		
-		if(Inputs.limitDownCollecor.get() == true && collectorSpeed > 0){
+		if(Inputs.limitDownCollecor.get() == false && collectorSpeed > 0){
 			collectorSpeed = 0;
 		}
 		
-		if(Inputs.limitUpShooter.get() == true && shooterArmSpeed > 0){
+		if(Inputs.limitUpShooter.get() == false && shooterArmSpeed < 0){
 			shooterArmSpeed = 0;
 		}
 		
-		if(Inputs.limitDownShooter.get() == true && shooterArmSpeed < 0){
+		if(Inputs.limitDownShooter.get() == false && shooterArmSpeed > 0){
 			shooterArmSpeed = 0;
 		}
-		*/
 		
 		//set all motors
 		setWheels(wheelSpeed);
@@ -192,26 +237,18 @@ public class Mechanisms{
 	}
 	
 	public static void shooterAim(double value, double speed, double deadband){
-		if(Inputs.getShooterAngle() < (value - deadband/2)){
-			shooterArmSpeed = speed;
-		} else if(Inputs.getShooterAngle() > (value + deadband/2)){
-			shooterArmSpeed = speed * -1;
-		} else {
-			shooterArmSpeed = 0;
-			shooterDone = true;
-		}
+		//PID control
+		shooterController.setSetpoint(value);
+		shooterController.setAbsoluteTolerance(deadband);
+		shooterController.enable();
 	}
 	
-	private static void collectorAim(double value, double speed, double deadband){
+	public static void collectorAim(double value, double speed, double deadband){
 		if(Inputs.getCollectorAngle() > 0.8){
-			if(Inputs.getCollectorAngle() < (value - deadband/2)){
-				collectorSpeed = speed;
-			} else if(Inputs.getShooterAngle() > (value + deadband/2)){
-				collectorSpeed = speed * -1;
-			} else {
-				collectorSpeed = 0;
-				collectorDone = true;
-			}
+			//do it PID
+			collectorController.setSetpoint(value);
+			collectorController.setAbsoluteTolerance(deadband);
+			collectorController.enable();
 		}
 	}
 	
@@ -229,9 +266,7 @@ public class Mechanisms{
 		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 		Inputs.shooterWheelRight.set(shooterWheelSpeed);
 		
-		System.out.println("left" + Inputs.encoderShooterLeft.getRate());
-		System.out.println("right" + Inputs.encoderShooterRight.getRate());
-		
+		/*
 		//only enable corrections above a certain rpm
 		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > 20000 && Math.abs(Inputs.encoderShooterRight.getRate()) > 20000){
 			// RAISE SPEED TO COMPENSATE
@@ -253,6 +288,8 @@ public class Mechanisms{
 				}
 			}
 		}
+		*/
+		/*
 		//check for motor stall
 		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(Inputs.encoderShooterRight.getRate()) < 10)  || (Math.abs(Inputs.encoderShooterRight.getRate()) < 10) )){
@@ -260,7 +297,7 @@ public class Mechanisms{
 			Inputs.shooterWheelLeft.set(0);
 			Inputs.shooterWheelRight.set(0);
 		}
-		
+		*/
 	}
 	
 }
