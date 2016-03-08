@@ -30,8 +30,8 @@ public class Inputs{
 	static DigitalInput limitUpCollector = new DigitalInput(4);
 	static DigitalInput limitDownCollecor = new DigitalInput(5);
 	static DigitalInput ballStop = new DigitalInput(6);
-	static DigitalInput limitUpShooter = new DigitalInput(7);
-	static DigitalInput limitDownShooter = new DigitalInput(8);
+	public static DigitalInput limitUpShooter = new DigitalInput(7);
+	public static DigitalInput limitDownShooter = new DigitalInput(8);
 	
 	public static double shooterAngleDiff;
 	public static double collectorAngleDiff;

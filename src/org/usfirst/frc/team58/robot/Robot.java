@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
@@ -79,7 +80,6 @@ public class Robot extends IterativeRobot {
     }
     
     public void teleopInit(){
-    	System.out.println("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
     	
     }
     
@@ -177,3 +177,135 @@ public class Robot extends IterativeRobot {
     }
     
 }
+
+
+	//DYNAMIC COLLECTOR LIMIT (upper)
+	//ensure both sensors are operational
+	/*if(Inputs.getCollectorAngle() > 0.8){
+		//upper collector limit when shooter is down
+		if(Inputs.getShooterAngle() > 1.26){
+			if(collectorSpeed < 0){
+				if(Inputs.getCollectorAngle() > 1.22){
+					collectorSpeed = collectorSpeed;
+				} else if(Inputs.getCollectorAngle() > 1.15){
+					collectorSpeed = -0.35;
+				} else {
+					collectorSpeed = 0;
+				}
+			}
+		} else { //upper collector limit when shooter is up
+			if(collectorSpeed < 0){
+				if(Inputs.getCollectorAngle() > 1.22){
+					collectorSpeed = collectorSpeed;
+				} else if(Inputs.getCollectorAngle() > 1.15){
+					collectorSpeed = -0.35;
+				} else {
+					collectorSpeed = 0;
+				}
+			}
+		}
+	}
+
+public static void teleopTarget(){
+	
+	grip = NetworkTable.getTable("GRIP/tapeData");
+	midXArray = grip.getNumberArray("centerX", error);
+	midYArray = grip.getNumberArray("centerY", error);
+	heightArray = grip.getNumberArray("height", error);
+	nObjects = midXArray.length;
+	
+	if(targetStage == 0){ //raise shooter to pre-angle
+		Mechanisms.shooterAim(1.33, .1);
+		if(Mechanisms.shooterDone == true){
+			Mechanisms.shooterDone = false;
+			targetStage = 1;
+		}
+		
+	} else if(targetStage == 1){
+		if(nObjects == 1){
+			target = 0;
+			targetStage = 2;
+			//find target gyro voltage from midx
+		} else if(nObjects == 2){
+			//more than 1 goal found
+			widthArray = grip.getNumberArray("width", error);
+			largestWidth = 0;
+			
+			//find optimal target
+			//iterate through both contours
+			for(int i = 0; i <= 1; i++){
+				if(widthArray[i] > largestWidth){
+					largestWidth = widthArray[i];
+					target = i;
+				}
+			}
+			targetStage = 2;
+		} else {
+			//more than 2 or 0 contours found
+			//reiterate
+			shootBegun = false;
+			targetStage = 0;
+			programRunning = false;
+			targeting = false;
+		}
+	} else if(targetStage == 2){
+		//get midX values
+		midX = midXArray[target];
+		
+		//align to midpoint x
+		if(midX > 192 && midX < 202){
+			Mechanisms.rotateSpeed = 0;
+			Mechanisms.driveSpeed = 0;
+			targetStage = 3; //begin aiming
+		} else if(midX <= 192){
+			Mechanisms.rotateSpeed = 0.6;
+		} else if(midX >= 202){
+			Mechanisms.rotateSpeed = -0.6;
+		}
+	} else if(targetStage == 3){ //aim shooter arm
+        
+        if(nObjects > 0 && nObjects < target + 2){ //only shoot if the target is defined
+        	//shooter align
+            double angle = (0.00083 * midYArray[target])  + 1.1; 
+            Mechanisms.shooterAim(1.174, 0.1);
+			if(Mechanisms.shooterDone == true){
+				Mechanisms.shooterDone = false;
+				targetStage = 4;
+			}
+        } else {
+        	targetStage = 3;
+        }
+		
+    } else if(targetStage == 4){ //shoot the ball
+		if(shootBegun == false){
+			shootBegun = true;
+			timeFlag = timer.get();
+		}
+		if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
+			Mechanisms.wheelSpeed = 1;
+		} else if(timer.get() - timeFlag < 3.5) {
+			Mechanisms.wheelSpeed = 1;
+			Mechanisms.feederSpeed = 0;
+		} else { //boulder was fired
+			Mechanisms.wheelSpeed = 0;
+			Mechanisms.feederSpeed = 1; //stop feeder wheel
+			shootBegun = false;
+			targetStage = 0;
+			programRunning = false;
+			targeting = false;
+		}
+	} //ball shoot
+}
+
+	//GO TO SHOOTING ANGLE
+	
+	if(Inputs.getShooterAngle() < 1.174 - 0.05){
+		shooterArmSpeed = 0.45;
+	} else if(Inputs.getShooterAngle() > 1.174 + 0.05){
+		shooterArmSpeed = -0.45;
+	} else {
+		shooterArmSpeed = 0;
+	}
+			
+
+*/

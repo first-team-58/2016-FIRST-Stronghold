@@ -6,8 +6,8 @@ import edu.wpi.first.wpilibj.Timer;
 
 public class Drive {
 	
-	private static Talon leftDrive = new Talon(0);
-	private static Talon rightDrive = new Talon(1);
+	public static Talon leftDrive = new Talon(0);
+	public static Talon rightDrive = new Talon(1);
 	
 	private static double driveSpeed;
 	private static double rotateSpeed;
@@ -15,7 +15,7 @@ public class Drive {
 	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void init(){
-		//init encoders
+
 	}
 	
 	public static void reset(){

@@ -1,5 +1,6 @@
 package org.usfirst.frc.team58.robot;
 
+import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
@@ -36,6 +37,9 @@ public class Auto{
 	
 	public static double errorConstant = -0.2;
 	
+	public static PIDController alignmentControllerLeft = new PIDController(0, 0, 0, Inputs.gyro, Drive.leftDrive);
+	public static PIDController alignmentControllerRight = new PIDController(0, 0, 0, Inputs.gyro, Drive.rightDrive);
+	
 	private static double[] error = {-1};
 	
 	public static void init(){
@@ -53,7 +57,7 @@ public class Auto{
 				reset();
 				break;
 			case 2:
-				lowBarShoot();
+				lowBar();
 				break;
 			case 3:
 				defenseStraight();
@@ -69,27 +73,21 @@ public class Auto{
 	
 	public static void reset(){
 		//raise arms for start of match
-		Mechanisms.collectorAim(1, 0.25, 0.3);
+		Mechanisms.collectorAim(1, 0.3);
+		Mechanisms.shooterAim(1, 0.3);
 	}
 	
-	public static void lowBarShoot(){
+	public static void lowBar(){
 		//go through low bar, turn right and shoot
 		
-		if(Inputs.getShooterAngle() < 1.8){
-			Mechanisms.shooterAim(1.92, 0.2, 0.1);
-		} else {
-			Mechanisms.shooterController.disable();
-		}
-		
-		if(Inputs.getCollectorAngle() < 1.54){
-			Mechanisms.collectorAim(1.59, 0.3, 0.15);
-		} else {
-			Mechanisms.collectorController.disable();
-		}
+		Mechanisms.shooterAim(1.92, 0.1);
+		Mechanisms.collectorAim(1.59, 0.15);
 		
 		 if(timer.get() < 4){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
+		} else {
+			autoTarget();
 		}
 		
 	}
@@ -106,27 +104,24 @@ public class Auto{
 		}
 	}
 	
-	
-	public static void teleopTarget(){
-		
+	public static void autoTarget(){
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
 		heightArray = grip.getNumberArray("height", error);
 		nObjects = midXArray.length;
 		
-		if(targetStage == 0){ //raise shooter to pre-angle
-			Mechanisms.shooterAim(1.33, .55, .1);
-			if(Mechanisms.shooterDone == true){
-				Mechanisms.shooterDone = false;
-				targetStage = 1;
-			}
+		double gyroTarget = 0;
+		
+		if(targetStage == 0){ //raise shooter to vision angle
 			
 		} else if(targetStage == 1){
 			if(nObjects == 1){
 				target = 0;
+				//find target gyroscope voltage from midx
+				
+				//switch to aligning stage
 				targetStage = 2;
-				//find target gyro voltage from midx
 			} else if(nObjects == 2){
 				//more than 1 goal found
 				widthArray = grip.getNumberArray("width", error);
@@ -140,6 +135,10 @@ public class Auto{
 						target = i;
 					}
 				}
+				
+				//find target gyro voltage from midx
+				
+				//switch to aligning stage
 				targetStage = 2;
 			} else {
 				//more than 2 or 0 contours found
@@ -150,30 +149,34 @@ public class Auto{
 				targeting = false;
 			}
 		} else if(targetStage == 2){
-			//get midX values
-			midX = midXArray[target];
+			//align to goal
+			//set PID presets
+			alignmentControllerLeft.setSetpoint(gyroTarget);
+			alignmentControllerLeft.setAbsoluteTolerance(0.4);
+			alignmentControllerRight.setSetpoint(gyroTarget);
+			alignmentControllerRight.setAbsoluteTolerance(0.4);
 			
-			//align to midpoint x
-			if(midX > 192 && midX < 202){
-				Mechanisms.rotateSpeed = 0;
-				Mechanisms.driveSpeed = 0;
-				targetStage = 3; //begin aiming
-			} else if(midX <= 192){
-				Mechanisms.rotateSpeed = 0.6;
-			} else if(midX >= 202){
-				Mechanisms.rotateSpeed = -0.6;
+			//enable controllers until alignment achieved
+			//robot alignment is out of range
+			if(Inputs.gyro.getAngle() > gyroTarget + 0.2 || Inputs.gyro.getAngle() < gyroTarget - 0.2){
+				alignmentControllerRight.enable();
+				alignmentControllerLeft.enable();
+			} else {
+				//alignment achieved
+				alignmentControllerRight.disable();
+				alignmentControllerLeft.disable();
 			}
-			
-		} else if(targetStage == 3){ //aim shooter arm
-            
-            if(nObjects > 0 && nObjects < target + 2){ //only shoot if the target is defined
+		} else if(targetStage == 3){
+			//aim shooter arm
+            if(nObjects > 0 && nObjects < target + 2){ //check if target index is defined
             	//shooter align
-                double angle = (0.00083 * midYArray[target])  + 1.1; 
-                Mechanisms.shooterAim(1.174, .48, 0.1);
-    			if(Mechanisms.shooterDone == true){
-    				Mechanisms.shooterDone = false;
-    				targetStage = 4;
-    			}
+            	if(Inputs.limitUpShooter.get() == true ){
+            		//raise if upper shooter limit triggered
+            		Inputs.doShooter(0.3);
+            	} else {
+            		Inputs.doShooter(0);
+            		targetStage = 4;
+            	}
             } else {
             	targetStage = 3;
             }
@@ -197,119 +200,10 @@ public class Auto{
 				targeting = false;
 			}
 		} //ball shoot
-	}
-	
-public static void autoTarget(){
-		
-		grip = NetworkTable.getTable("GRIP/tapeData");
-		midXArray = grip.getNumberArray("centerX", error);
-		midYArray = grip.getNumberArray("centerY", error);
-		heightArray = grip.getNumberArray("height", error);
-		nObjects = midXArray.length;
-		
-		if(nObjects == 1){
-			target = 0;
-		} else if(nObjects == 2){
-			//more than 1 goal found
-			widthArray = grip.getNumberArray("width", error);
-			largestWidth = 0;
-			
-			//find optimal target
-			//iterate through both contours
-			for(int i = 0; i <= 1; i++){
-				if(widthArray[i] > largestWidth){
-					largestWidth = widthArray[i];
-					target = i;
-				}
-			}
-		} else {
-			//more than 2 contours
-			//stop the program
-			targetStage = 0;
-		}
-		
-		if(targetStage == 0){ //raise shooter to pre-angle
-			if(Inputs.getShooterAngle() < .95){
-				Inputs.doShooter(0.5);
-			} else if(Inputs.getShooterAngle() > 1.05){
-				Inputs.doShooter(-0.5);
-			} else {
-				Inputs.doShooter(0);
-				targetStage = 1;
-			}
-		} else if(targetStage == 1){
-			//get midX values
-			midX = midXArray[target];
-				
-			//align to midpoint x
-			if(midX > 177 && midX < 187){
-				Drive.drive(0, 0);
-				targetStage = 2; //begin aiming
-			} else if(midX < 177){
-				Drive.drive(0, 0.58);
-			} else if(midX > 187){
-				Drive.drive( 0, -0.58);
-			}
-			
-		} else if(targetStage == 2){ //aim shooter arm
-            midY = midYArray[target];
-            //shooter align code here
-            //double angle = m * midY  + b; 
-            /*
-            if(Inputs.getShooterAngle() < (angle - 0.05)){
-				Inputs.doShooter(0.5);
-			} else if(Inputs.getShooterAngle() > (angle + 0.05)){
-				Inputs.doShooter(-0.5);
-			} else {
-				Inputs.doShooter(0);
-				targetStage = 3;
-			} */
-			
-        } else if(targetStage == 3){ //shoot the ball
-			if(shootBegun == false){
-				shootBegun = true;
-				timeFlag = timer.get();
-			}
-			
-			if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
-				Mechanisms.setWheels(1);
-			} else if(timer.get() - timeFlag < 3.5) {
-				Mechanisms.setWheels(1);
-				Inputs.setFeeder(0);
-			} else { //boulder was fired
-				Mechanisms.setWheels(0);
-				Inputs.setFeeder(1); //stop feeder wheel
-				shootBegun = false;
-				targetStage = 0;
-			}
-		} //ball shoot
+
 	}
 	
 	public static void portcullus(){
-/*
-		if(Inputs.getCollectorAngle() < 2.16 && programStage == 0){
-			Mechanisms.collectorSpeed = 0.5;
-		} else if(programStage == 0){
-			programStage = 1;
-			timeFlag = Mechanisms.timer.get();
-		} else if(programStage == 1 && (Mechanisms.timer.get() - timeFlag) < 2.5){
-			Drive.drive(0.5, 0);
-			
-		} else if(programStage == 1){
-			Mechanisms.driveSpeed = 0;
-			programStage = 2;
-			timeFlag = Mechanisms.timer.get();
-		} else if(programStage == 2  && (Mechanisms.timer.get() - timeFlag) < 4){
-			Mechanisms.driveSpeed = 0.5;
-			Mechanisms.collectorSpeed = -1;
-		} else {
-			Mechanisms.driveSpeed = 0;
-			Mechanisms.collectorSpeed = 0;
-			porkulusRunning = false;
-			programRunning = false;
-			programStage = 0;
-		}
-	*/
 		
 		if(timer.get() < 1.2){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
@@ -324,9 +218,8 @@ public static void autoTarget(){
 		
 	}
 	
-	//sit still
 	public static void nothing(){
-		//zero all functions
+		//zero all motors
 		Drive.drive(0, 0);
 		Inputs.doShooter(0);
 		Inputs.doCollector(0);
