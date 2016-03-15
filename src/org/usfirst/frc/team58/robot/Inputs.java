@@ -10,8 +10,11 @@ import edu.wpi.first.wpilibj.filters.LinearDigitalFilter;
 
 public class Inputs{
 	
+	static double gwenShooterDelta = -0.008;
+	static double gwenCollectorDelta = -0.04;
+	
 	//motors
-	static Talon shooterArm = new Talon(2);
+	public static Talon shooterArm = new Talon(2);
 	static Talon shooterWheelLeft = new Talon(3);
 	static Talon shooterWheelRight = new Talon(4);
 	static Talon collector = new Talon(7);
@@ -22,7 +25,6 @@ public class Inputs{
 	static AnalogInput collectorAngle = new AnalogInput(0);
 	static AnalogInput shooterAngle = new AnalogInput(2);
 	static AnalogGyro gyro = new AnalogGyro(1);
-	static AnalogInput ir = new AnalogInput(3);
 	// i should comment more often
 	//digital sensors
 	static Encoder encoderShooterLeft = new Encoder(0, 1);
@@ -36,20 +38,16 @@ public class Inputs{
 	public static double shooterAngleDiff;
 	public static double collectorAngleDiff;
 	public static double shooterBeta = 1.65; //90 degrees
-	public static double collectorBeta = 1.54; //90 degrees
-	
-	public static double getIR(){
-		return ir.getAverageVoltage();
-	}
+	public static double collectorBeta = 1.54; //90 degrees 
 	
 	public static double getCollectorAngle(){
 		//return current angle correcting for differences
-		return collectorAngle.getAverageVoltage() -0.04;
+		return collectorAngle.getAverageVoltage();
 	}
 	
 	public static double getShooterAngle(){
 		//return current angle correcting for differences
-		return shooterAngle.getAverageVoltage() - 0.008;
+		return shooterAngle.getAverageVoltage();
 	}
 	
 	public static void setIntake(int intakeState){
@@ -61,6 +59,7 @@ public class Inputs{
 			intake.set(Relay.Value.kForward);
 		}
 	}
+	
 	
 	public static void setFeeder(int feederState){
 		if(feederState == 0){
@@ -79,7 +78,6 @@ public class Inputs{
 	//move shooter arm
 	public static void doShooter(double shooterArmSpeed){
 		shooterArm.set(shooterArmSpeed);
-		System.out.println(shooterArmSpeed);
 	}
 
 }

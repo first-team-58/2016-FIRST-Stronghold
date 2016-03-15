@@ -14,15 +14,14 @@ public class Auto{
 	private static double midXArray[];
 	private static double midYArray[];
 	private static double widthArray[];
-	private static double heightArray[];
-	private static double midX;
-	private static double midY;
-	private static double height;
-	private static double width;
-	private static double targetY;
 	private static int target;
-	private static double largestWidth;
+	
+	private static int largestWidth;
+	private static int lowest;
+	
 	private static double distance;
+	
+	private static double gyroTarget = 0;
 	
 	private static double initGyro;
 	
@@ -31,14 +30,15 @@ public class Auto{
 	public static boolean programRunning = false;
 	public static double timeFlag;
 	public static double programStage = 0;
-	private static double targetStage = 0;
+	
+	private static int targetStage = 0;
 	private static boolean shootBegun = false;
 	public static boolean targeting = false;
 	
 	public static double errorConstant = -0.2;
 	
-	public static PIDController alignmentControllerLeft = new PIDController(0, 0, 0, Inputs.gyro, Drive.leftDrive);
-	public static PIDController alignmentControllerRight = new PIDController(0, 0, 0, Inputs.gyro, Drive.rightDrive);
+	public static PIDController alignmentControllerLeft = new PIDController(20, 0, 0, Inputs.gyro, Drive.leftDrive);
+	public static PIDController alignmentControllerRight = new PIDController(20, 0, 0, Inputs.gyro, Drive.rightDrive);
 	
 	private static double[] error = {-1};
 	
@@ -60,9 +60,12 @@ public class Auto{
 				lowBar();
 				break;
 			case 3:
-				defenseStraight();
+				defenseTouch();
 				break;
 			case 4:
+				defenseStraight();
+				break;
+			case 5:
 				portcullus();
 				break;
 			default:
@@ -71,110 +74,178 @@ public class Auto{
 		}
 	}
 	
+	//stage arms in up positions for match start
 	public static void reset(){
-		//raise arms for start of match
-		Mechanisms.collectorAim(1, 0.3);
-		Mechanisms.shooterAim(1, 0.3);
+		//shooter to upper limit
+		if(Inputs.limitUpShooter.get() == true){ //upper shooter limit not triggered
+    		//raise until upper shooter limit triggered
+    		Inputs.doShooter(-0.45);
+    	} else { //upper shooter limit triggered
+    		//stop shooter
+    		Inputs.doShooter(0);
+    		//collector outside of frame
+    		if(Inputs.getCollectorAngle() > 1.15){
+        		//raise collector
+        		Inputs.doCollector(-0.5);
+        		timeFlag = timer.get();
+    		} else if(timer.get() - timeFlag < 1){ //past limit but less than 1/2 seconds passed
+    			Inputs.doCollector(-0.25); //raise
+    		} else { //linit reached
+    			Inputs.doCollector(0); //stop
+    		}
+    		
+    	}
+		
 	}
 	
 	public static void lowBar(){
 		//go through low bar, turn right and shoot
+		if(Inputs.limitDownShooter.get() == true || Inputs.getShooterAngle() < 0.77){
+			Inputs.doShooter(0.18);
+		} else {
+			Inputs.doShooter(0);
+		}
 		
-		Mechanisms.shooterAim(1.92, 0.1);
-		Mechanisms.collectorAim(1.59, 0.15);
 		
-		 if(timer.get() < 4){
+		
+		if(Inputs.getCollectorAngle() < 1.75){
+			Inputs.doCollector(0.5);
+		} else {
+			Inputs.doCollector(0);
+			if(timer.get() < 8){
+				double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+				Drive.drive(0.75, delta * errorConstant);
+			} else {
+				autoTarget();
+			}
+		}
+		
+		if(Inputs.limitDownCollecor.get() == false){
+			Inputs.doCollector(0);
+		} 
+		
+	}
+	
+	public static void defenseTouch(){
+		//wheelie
+		if(timer.get() < 1.2){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else {
-			autoTarget();
+			Drive.drive(0, 0);
 		}
 		
 	}
 	
 	public static void defenseStraight(){
+		//wheelie
 		if(timer.get() < 1.2){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else if(timer.get() < 1.6){
 			Drive.drive(-1, 0);
-		} else if(timer.get() < 4.6){
+		} else if(timer.get() < 3.5){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
-			Drive.drive(1, -0.3);
+			Drive.drive(1, 0.3);
 		}
+		//shoot
 	}
 	
-	public static void autoTarget(){
+	public static void teleopTarget(){
 		grip = NetworkTable.getTable("GRIP/tapeData");
 		midXArray = grip.getNumberArray("centerX", error);
 		midYArray = grip.getNumberArray("centerY", error);
-		heightArray = grip.getNumberArray("height", error);
+		widthArray = grip.getNumberArray("width", error);
 		nObjects = midXArray.length;
 		
-		double gyroTarget = 0;
+		System.out.println(nObjects);
 		
-		if(targetStage == 0){ //raise shooter to vision angle
-			
+		if(targetStage == 0){
+			targetStage = 1;
 		} else if(targetStage == 1){
 			if(nObjects == 1){
 				target = 0;
-				//find target gyroscope voltage from midx
 				
-				//switch to aligning stage
+				//find target gyro voltage from midx
+				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 51.67);
+				//switch stage
 				targetStage = 2;
-			} else if(nObjects == 2){
-				//more than 1 goal found
-				widthArray = grip.getNumberArray("width", error);
-				largestWidth = 0;
 				
-				//find optimal target
-				//iterate through both contours
+			} else if(nObjects == 2){
+				//two contours found
+				//find the widest target (best of two goals)
 				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > largestWidth){
-						largestWidth = widthArray[i];
-						target = i;
+					if(widthArray[i] > widthArray[largestWidth]){
+						largestWidth = i;
 					}
 				}
 				
-				//find target gyro voltage from midx
+				//find the lowest target to avoid external lighting
+				for(int i = 0; i < (nObjects + 1); i++){
+					if(midYArray[i] > midYArray[lowest] && i == target){
+						lowest = i;
+					}
+				} //make. it.go. -"John"
+				
+				//determine correct target
+				if(lowest == largestWidth){
+					target = lowest;
+				} else {
+					//in case a wider target exists above the castle
+					target = lowest;
+				}
+				
+				//mid-x to delta gyro angle algorithm
+				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 43);
 				
 				//switch to aligning stage
 				targetStage = 2;
-			} else {
-				//more than 2 or 0 contours found
-				//reiterate
-				shootBegun = false;
-				targetStage = 0;
-				programRunning = false;
-				targeting = false;
+			} else if(nObjects > 2){
+				//find the widest target (best of two goals)
+				for(int i = 0; i <= 1; i++){
+					if(widthArray[i] > widthArray[largestWidth]){
+						largestWidth = i;
+					}
+				}
+				
+				//find the lowest target to avoid external lighting
+				for(int i = 0; i < (nObjects + 1); i++){
+					if(midYArray[i] > midYArray[lowest] && i == target){
+						lowest = i;
+					}
+				} //make. it.go. -"John"
+				
+				//determine correct target
+				if(lowest == largestWidth){
+					target = lowest;
+				} else {
+					//in case a wider target exists above the castle
+					target = lowest;
+				}
 			}
 		} else if(targetStage == 2){
 			//align to goal
-			//set PID presets
-			alignmentControllerLeft.setSetpoint(gyroTarget);
-			alignmentControllerLeft.setAbsoluteTolerance(0.4);
-			alignmentControllerRight.setSetpoint(gyroTarget);
-			alignmentControllerRight.setAbsoluteTolerance(0.4);
 			
-			//enable controllers until alignment achieved
-			//robot alignment is out of range
-			if(Inputs.gyro.getAngle() > gyroTarget + 0.2 || Inputs.gyro.getAngle() < gyroTarget - 0.2){
-				alignmentControllerRight.enable();
-				alignmentControllerLeft.enable();
+			if(Inputs.gyro.getAngle() > gyroTarget + 0.34){
+				Mechanisms.rotateSpeed = 0.6;
+			} else if(Inputs.gyro.getAngle() < gyroTarget - 0.34){
+				Mechanisms.rotateSpeed = -0.6;
 			} else {
-				//alignment achieved
-				alignmentControllerRight.disable();
-				alignmentControllerLeft.disable();
+				Mechanisms.rotateSpeed = 0;
+				targetStage = 3;
 			}
+			
+			
 		} else if(targetStage == 3){
+			
 			//aim shooter arm
             if(nObjects > 0 && nObjects < target + 2){ //check if target index is defined
             	//shooter align
             	if(Inputs.limitUpShooter.get() == true ){
-            		//raise if upper shooter limit triggered
-            		Inputs.doShooter(0.3);
+            		//raise until upper shooter limit triggered
+            		Mechanisms.shooterArmSpeed = -0.5;
             	} else {
-            		Inputs.doShooter(0);
+            		Mechanisms.shooterArmSpeed = 0;
             		targetStage = 4;
             	}
             } else {
@@ -189,6 +260,7 @@ public class Auto{
 			if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
 				Mechanisms.wheelSpeed = 1;
 			} else if(timer.get() - timeFlag < 3.5) {
+				System.out.println("SHOOTING");
 				Mechanisms.wheelSpeed = 1;
 				Mechanisms.feederSpeed = 0;
 			} else { //boulder was fired
@@ -202,7 +274,7 @@ public class Auto{
 		} //ball shoot
 
 	}
-	
+		
 	public static void portcullus(){
 		
 		if(timer.get() < 1.2){

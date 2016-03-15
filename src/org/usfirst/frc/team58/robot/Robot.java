@@ -42,8 +42,9 @@ public class Robot extends IterativeRobot {
         autoChooser.addDefault("nothing", 0);
         autoChooser.addDefault("collector reset", 1);
         autoChooser.addDefault("Low bar", 2);
-        autoChooser.addDefault("defense straight", 3);
-        autoChooser.addDefault("portcullis", 4);
+        autoChooser.addDefault("defense touch", 3);
+        autoChooser.addDefault("defense straight", 4);
+        autoChooser.addDefault("portcullis", 5);
         SmartDashboard.putData("Auto choices", autoChooser);
         
         //collector PID
@@ -73,6 +74,7 @@ public class Robot extends IterativeRobot {
     	
         Mechanisms.init();
         Drive.init();
+        Auto.init();
     }
     
     private static void calibrateSensors(){
@@ -107,12 +109,11 @@ public class Robot extends IterativeRobot {
     }
     
     public void teleopPeriodic() {
-    	System.out.println(Inputs.gyro.getAngle());
-    	//calibrate sensors
-    	
     	
     	Drive.driveTeleop();
         Mechanisms.doTeleop();
+        
+        SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());

@@ -20,6 +20,8 @@ public class Mechanisms{
 	public static double driveSpeed;
 	public static double rotateSpeed;
 	
+	public static boolean shooterAiming;
+	
 	public static boolean shooterDone;
 	private static boolean collectorDone;
 	public static boolean facingFront;
@@ -40,8 +42,8 @@ public class Mechanisms{
 	//public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(Inputs.shooterAngle, null, null);
 	
 	//PID controllers
-	public static PIDController shooterController = new PIDController(2, 0, 0.0, Inputs.ir, Inputs.shooterArm);
-	public static PIDController collectorController = new PIDController(13, 0, 0.0, Inputs.collectorAngle, Inputs.collector);
+	public static PIDController shooterController = new PIDController(0, 0, 0.0, Inputs.shooterAngle, Inputs.shooterArm);
+	public static PIDController collectorController = new PIDController(0, 0, 0.0, Inputs.collectorAngle, Inputs.collector);
 	
 	public static Timer timer = new Timer();
 	
@@ -65,10 +67,17 @@ public class Mechanisms{
 		wheelSpeed = 0;
 		feederSpeed = 1;
 		intakeSpeed = 1;
+		
+		if(Inputs.gyro.getAngle() > 360 || Inputs.gyro.getAngle() < -360){
+			Inputs.gyro.reset();
+		}
+
+		SmartDashboard.putNumber("avg", shooterController.getAvgError());
 
 		//PID tuning
-		//collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
-		//shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
+		collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
+		shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
+		
 		
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
@@ -84,26 +93,44 @@ public class Mechanisms{
 		
 		//aim to shooting height
 		if(Joysticks.operator.getRawButton(1)){
-			//shooterAim(1.94, 0.3, 0.1);
-			//collectorAim(1.63, 0.5, 0.15);
-			//spins all wheel
 			intakeSpeed = 2;
 			feederSpeed = 2;
 			wheelSpeed = -0.35;
 		}
 		
 		if(Joysticks.operator.getThrottle() > 0){
-			shooterAim(1.174, 0.05);
+			shooterAim(1.46, 0.2);
 		}
 		
-		//auto collection angle and collector controls
+		if(Joysticks.operator.getTwist() > 0){
+			shooterController.disable();
+		}
+		
 		if(Joysticks.operator.getRawButton(2)){
-			shooterAim(1.91, 0.1);
-			collectorAim(1.59, 0.15);
+			/*
+			if(Inputs.getCollectorAngle() > 2.315){
+				collectorSpeed = -0.75;
+			} else if(Inputs.getCollectorAngle() < 2.28){
+				collectorSpeed = 0.75;
+			} else {
+				collectorSpeed = 0;
+			}
+			*/
+			shooterArmSpeed = 0.3;
+			
+			if(Inputs.getCollectorAngle() > 1.55 && Inputs.getCollectorAngle() < 1.65){
+				//stop
+				collectorSpeed = 0;
+			} else if(Inputs.getCollectorAngle() <= 1.55){
+				collectorSpeed = 0.7;
+			} else {
+				collectorSpeed = -0.7;
+			}
 		}
 		
+		//auto target
 		if(Joysticks.driver.getRawButton(8)){
-			Auto.autoTarget();
+			Auto.teleopTarget();
 			Auto.programRunning = true;
 		} else {
 			Auto.programRunning = false;
@@ -111,7 +138,7 @@ public class Mechanisms{
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5)){
-			wheelSpeed = .8;
+			wheelSpeed = 1;
 		} //do not put an else block here
 		
 		//stop rev if button not pressed only during shooter override
@@ -129,7 +156,7 @@ public class Mechanisms{
 		//enable limits only if sensor is reading
 		if(Inputs.getCollectorAngle() > 0.8){
 			//lower collector limit
-			if(Inputs.getCollectorAngle() > 2.1 && collectorSpeed > 0){
+			if(Inputs.getCollectorAngle() > 3.14 && collectorSpeed > 0){
 				collectorSpeed = 0;
 			}
 		}
@@ -137,23 +164,22 @@ public class Mechanisms{
 		//collector upper limit
 		if(Inputs.getCollectorAngle() > 0.8){
 			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() > 1.12){
-					collectorSpeed = collectorSpeed;
-				} else if(Inputs.getCollectorAngle() > 1.05){
-					collectorSpeed = -0.35;
-				} else {
+				if(Inputs.getCollectorAngle() < 1.13){
 					collectorSpeed = 0;
 				}
 			}
 		}
 		
-		//delta
-		
 		//shooter arm lower limit
-		if(Inputs.getShooterAngle() >  1.83 && shooterArmSpeed > 0){
+		if(Inputs.getShooterAngle() >  1.12 && shooterArmSpeed > 0){
 			shooterArmSpeed = 0;
-		} else if(Inputs.getShooterAngle() > 1.88 && shooterArmSpeed > 0){
-			shooterArmSpeed = 0.2;
+		} else if(Inputs.getShooterAngle() > 0.95 && shooterArmSpeed > 0){
+		
+			shooterArmSpeed = shooterArmSpeed * 0.5;
+		}
+		
+		if(Inputs.getShooterAngle() < 0.4 && shooterArmSpeed < 0){
+			shooterArmSpeed = 0;
 		}
 		
 		//hard limits
@@ -203,6 +229,8 @@ public class Mechanisms{
 	}
 	
 	public static void shooterAim(double value, double absoluteDeadband){
+		
+		shooterAiming = true;
 		//PID control
 		shooterController.setSetpoint(value);
 		shooterController.setAbsoluteTolerance(absoluteDeadband);
@@ -241,7 +269,7 @@ public class Mechanisms{
 		//setting wheel speeds
 		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 		Inputs.shooterWheelRight.set(shooterWheelSpeed);
-		
+		/*
 		//only enable corrections above a certain rpm
 		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > 20000 && Math.abs(Inputs.encoderShooterRight.getRate()) > 20000){
 			// RAISE SPEED TO COMPENSATE
@@ -271,6 +299,8 @@ public class Mechanisms{
 			Inputs.shooterWheelLeft.set(0);
 			Inputs.shooterWheelRight.set(0);
 		}
+		
+		*/
 	}
 	
 }
