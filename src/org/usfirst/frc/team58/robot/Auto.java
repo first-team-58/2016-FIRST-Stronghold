@@ -68,6 +68,9 @@ public class Auto{
 			case 5:
 				portcullus();
 				break;
+			case 6:
+				chevalDeFrise();
+				break;
 			default:
 				nothing();
 				break;
@@ -90,7 +93,7 @@ public class Auto{
         		timeFlag = timer.get();
     		} else if(timer.get() - timeFlag < 1){ //past limit but less than 1/2 seconds passed
     			Inputs.doCollector(-0.25); //raise
-    		} else { //linit reached
+    		} else { //limit reached
     			Inputs.doCollector(0); //stop
     		}
     		
@@ -98,26 +101,44 @@ public class Auto{
 		
 	}
 	
+	public static void chevalDeFrise(){
+		if(timer.get() < 1.2){
+			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(0.75, delta * errorConstant);
+		} else if(Inputs.limitDownCollecor.get() == true ){
+			Inputs.doCollector(0.75);
+		} else if(timer.get() < 8 || Inputs.limitUpCollector.get() == true ){
+		    Inputs.doCollector(-0.75);
+		    double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			Drive.drive(0.75, delta * errorConstant);
+		} else{
+			Inputs.doCollector(0);
+			teleopTarget();
+		}
+	}
+	
+	//go through low bar, turn right and shoot
 	public static void lowBar(){
-		//go through low bar, turn right and shoot
+		
 		if(Inputs.limitDownShooter.get() == true || Inputs.getShooterAngle() < 0.77){
 			Inputs.doShooter(0.18);
 		} else {
 			Inputs.doShooter(0);
 		}
 		
-		
-		
+		//check collector angle, lower it to below frame
 		if(Inputs.getCollectorAngle() < 1.75){
 			Inputs.doCollector(0.5);
 		} else {
 			Inputs.doCollector(0);
+			//if the timer is less than 8 sec, drive forwards in a straight line
 			if(timer.get() < 8){
 				double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
 				Drive.drive(0.75, delta * errorConstant);
 			} else {
-				autoTarget();
+				teleopTarget();
 			}
+			
 		}
 		
 		if(Inputs.limitDownCollecor.get() == false){

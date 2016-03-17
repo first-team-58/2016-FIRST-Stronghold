@@ -29,6 +29,7 @@ public class Inputs{
 	//digital sensors
 	static Encoder encoderShooterLeft = new Encoder(0, 1);
 	static Encoder encoderShooterRight = new Encoder(2, 3);
+	
 	static DigitalInput limitUpCollector = new DigitalInput(4);
 	static DigitalInput limitDownCollecor = new DigitalInput(5);
 	static DigitalInput ballStop = new DigitalInput(6);

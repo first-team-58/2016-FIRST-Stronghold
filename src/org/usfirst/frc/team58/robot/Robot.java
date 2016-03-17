@@ -45,6 +45,7 @@ public class Robot extends IterativeRobot {
         autoChooser.addDefault("defense touch", 3);
         autoChooser.addDefault("defense straight", 4);
         autoChooser.addDefault("portcullis", 5);
+        autoChooser.addDefault("Cheval De Frise", 6);
         SmartDashboard.putData("Auto choices", autoChooser);
         
         //collector PID
