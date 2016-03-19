@@ -25,7 +25,6 @@ public class Inputs{
 	static AnalogInput collectorAngle = new AnalogInput(0);
 	static AnalogInput shooterAngle = new AnalogInput(2);
 	static AnalogGyro gyro = new AnalogGyro(1);
-	// i should comment more often
 	//digital sensors
 	static Encoder encoderShooterLeft = new Encoder(0, 1);
 	static Encoder encoderShooterRight = new Encoder(2, 3);

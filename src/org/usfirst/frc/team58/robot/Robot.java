@@ -105,7 +105,7 @@ public class Robot extends IterativeRobot {
     }
     
     public void autonomousPeriodic() {
-    	System.out.println(Inputs.gyro.getAngle());
+
     	Auto.run(program);
     }
     
@@ -115,6 +115,8 @@ public class Robot extends IterativeRobot {
         Mechanisms.doTeleop();
         
         SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
+        
+        
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());

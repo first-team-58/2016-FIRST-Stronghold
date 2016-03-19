@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Auto{
 	
@@ -16,8 +17,8 @@ public class Auto{
 	private static double widthArray[];
 	private static int target;
 	
-	private static int largestWidth;
-	private static int lowest;
+	private static int largestWidth = 0;
+	private static int lowest = 0;
 	
 	private static double distance;
 	
@@ -31,7 +32,7 @@ public class Auto{
 	public static double timeFlag;
 	public static double programStage = 0;
 	
-	private static int targetStage = 0;
+	public static int targetStage = 0;
 	private static boolean shootBegun = false;
 	public static boolean targeting = false;
 	
@@ -179,100 +180,65 @@ public class Auto{
 		widthArray = grip.getNumberArray("width", error);
 		nObjects = midXArray.length;
 		
-		System.out.println(nObjects);
+		System.out.println("GYRO: " + (Inputs.gyro.getAngle() - gyroTarget));
+		SmartDashboard.putNumber("GYRO: ", (Inputs.gyro.getAngle() - gyroTarget));
 		
 		if(targetStage == 0){
 			targetStage = 1;
 		} else if(targetStage == 1){
-			if(nObjects == 1){
+			System.out.println("FINDING");
+			
+			if(nObjects == 0){
+				targetStage = 0;
+			} else if(nObjects == 1){
 				target = 0;
-				
-				//find target gyro voltage from midx
-				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 51.67);
-				//switch stage
-				targetStage = 2;
-				
-			} else if(nObjects == 2){
-				//two contours found
-				//find the widest target (best of two goals)
-				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > widthArray[largestWidth]){
-						largestWidth = i;
-					}
-				}
+			} else if(nObjects > 1){
 				
 				//find the lowest target to avoid external lighting
-				for(int i = 0; i < (nObjects + 1); i++){
-					if(midYArray[i] > midYArray[lowest] && i == target){
+				for(int i = 0; i < nObjects; i++){
+					if(midYArray[i] > midYArray[lowest]){
 						lowest = i;
 					}
 				} //make. it.go. -"John"
 				
-				//determine correct target
-				if(lowest == largestWidth){
-					target = lowest;
-				} else {
-					//in case a wider target exists above the castle
-					target = lowest;
-				}
-				
-				//mid-x to delta gyro angle algorithm
-				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 43);
-				
-				//switch to aligning stage
-				targetStage = 2;
-			} else if(nObjects > 2){
-				//find the widest target (best of two goals)
-				for(int i = 0; i <= 1; i++){
-					if(widthArray[i] > widthArray[largestWidth]){
-						largestWidth = i;
-					}
-				}
-				
-				//find the lowest target to avoid external lighting
-				for(int i = 0; i < (nObjects + 1); i++){
-					if(midYArray[i] > midYArray[lowest] && i == target){
-						lowest = i;
-					}
-				} //make. it.go. -"John"
-				
-				//determine correct target
-				if(lowest == largestWidth){
-					target = lowest;
-				} else {
-					//in case a wider target exists above the castle
-					target = lowest;
-				}
+				target = lowest;
 			}
+			
+			//check if target is in correct range
+			if(midYArray[target] < 142 && midYArray[target] > 117){
+				//mid-x to delta gyro angle algorithm
+				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 40);
+				targetStage = 2;
+			} else {
+				targetStage = 1;
+			}
+			
 		} else if(targetStage == 2){
 			//align to goal
 			
-			if(Inputs.gyro.getAngle() > gyroTarget + 0.34){
-				Mechanisms.rotateSpeed = 0.6;
-			} else if(Inputs.gyro.getAngle() < gyroTarget - 0.34){
-				Mechanisms.rotateSpeed = -0.6;
+			
+			
+			if(Inputs.gyro.getAngle() > gyroTarget + 0.3){
+				Mechanisms.rotateSpeed = 0.55;
+			} else if(Inputs.gyro.getAngle() < gyroTarget - 0.3){
+				Mechanisms.rotateSpeed = -0.55;
 			} else {
 				Mechanisms.rotateSpeed = 0;
 				targetStage = 3;
 			}
 			
-			
 		} else if(targetStage == 3){
+			System.out.println("ARM");
 			
 			//aim shooter arm
-            if(nObjects > 0 && nObjects < target + 2){ //check if target index is defined
-            	//shooter align
-            	if(Inputs.limitUpShooter.get() == true ){
-            		//raise until upper shooter limit triggered
-            		Mechanisms.shooterArmSpeed = -0.5;
-            	} else {
-            		Mechanisms.shooterArmSpeed = 0;
-            		targetStage = 4;
-            	}
+            if(Inputs.getShooterAngle() > 0.41){
+            	//raise until upper shooter limit triggered
+            	Mechanisms.shooterArmSpeed = -0.5;
             } else {
-            	targetStage = 3;
+            	Mechanisms.shooterArmSpeed = 0;
+            	targetStage = 4;
             }
-			
+            	
         } else if(targetStage == 4){ //shoot the ball
 			if(shootBegun == false){
 				shootBegun = true;

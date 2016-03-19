@@ -155,19 +155,19 @@ public class Mechanisms{
 		
 		//enable limits only if sensor is reading
 		if(Inputs.getCollectorAngle() > 0.8){
+			
 			//lower collector limit
 			if(Inputs.getCollectorAngle() > 3.14 && collectorSpeed > 0){
 				collectorSpeed = 0;
 			}
-		}
 		
-		//collector upper limit
-		if(Inputs.getCollectorAngle() > 0.8){
+			//upper collector limit
 			if(collectorSpeed < 0){
 				if(Inputs.getCollectorAngle() < 1.13){
 					collectorSpeed = 0;
 				}
 			}
+			
 		}
 		
 		//shooter arm lower limit
@@ -178,6 +178,7 @@ public class Mechanisms{
 			shooterArmSpeed = shooterArmSpeed * 0.5;
 		}
 		
+		//shooter arm upper limit
 		if(Inputs.getShooterAngle() < 0.4 && shooterArmSpeed < 0){
 			shooterArmSpeed = 0;
 		}
@@ -269,7 +270,7 @@ public class Mechanisms{
 		//setting wheel speeds
 		Inputs.shooterWheelLeft.set(shooterWheelSpeed);
 		Inputs.shooterWheelRight.set(shooterWheelSpeed);
-		/*
+		
 		//only enable corrections above a certain rpm
 		if(Math.abs(Inputs.encoderShooterLeft.getRate()) > 20000 && Math.abs(Inputs.encoderShooterRight.getRate()) > 20000){
 			// RAISE SPEED TO COMPENSATE
@@ -292,6 +293,7 @@ public class Mechanisms{
 			}
 		}
 		
+		/*
 		//check for motor stall
 		//if more than second has elapsed and encoders aren't reading and a non zero wheel speed is being applied
 		if((timer.get() - wheelStartTime > 1) && (shooterWheelSpeed != 0) &&( (Math.abs(Inputs.encoderShooterRight.getRate()) < 10)  || (Math.abs(Inputs.encoderShooterRight.getRate()) < 10) )){
