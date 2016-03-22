@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Mechanisms{
 	
+	//speed variables for motors and things
 	public static double shooterArmSpeed;
 	public static double collectorSpeed;
 	public static int feederSpeed;
@@ -21,25 +22,19 @@ public class Mechanisms{
 	public static double rotateSpeed;
 	
 	public static boolean shooterAiming;
-	
 	public static boolean shooterDone;
-	private static boolean collectorDone;
+	
 	public static boolean facingFront;
 	
+	public static boolean targeting = false;
 	public static double fireTime;
-	private static double collectorAimBegin;
-	private static double wheelStartTime;
-	
-	private static boolean collectorAiming;
-	public static boolean targeting;
+	//shooter wheels are running
 	private static boolean rev;
+	//used to record wheel spin duration
+	private static double wheelStartTime;
 	
 	private static double[] ffGains = {1};
 	private static double[] fbGains = {1};
-	
-	//PID filters
-	//public static LinearDigitalFilter collectorAngleFilter = new LinearDigitalFilter(Inputs.collectorAngle, ffGains, fbGains);
-	//public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(Inputs.shooterAngle, null, null);
 	
 	//PID controllers
 	public static PIDController shooterController = new PIDController(0, 0, 0.0, Inputs.shooterAngle, Inputs.shooterArm);
@@ -52,7 +47,6 @@ public class Mechanisms{
 		shooterDone = false;
 		timer.start();
 		targeting = false;
-		collectorAiming = false;
 		rev = false;
 		driveSpeed = 0;
 		rotateSpeed = 0;
@@ -68,12 +62,12 @@ public class Mechanisms{
 		feederSpeed = 1;
 		intakeSpeed = 1;
 		
+		//reset the gyro angle everytime a full (360 degree) rotation has been completed
+		//otherwise, the value accumulates > 360
 		if(Inputs.gyro.getAngle() > 360 || Inputs.gyro.getAngle() < -360){
 			Inputs.gyro.reset();
 		}
-
-		SmartDashboard.putNumber("avg", shooterController.getAvgError());
-
+		
 		//PID tuning
 		collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
 		shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
@@ -107,15 +101,6 @@ public class Mechanisms{
 		}
 		
 		if(Joysticks.operator.getRawButton(2)){
-			/*
-			if(Inputs.getCollectorAngle() > 2.315){
-				collectorSpeed = -0.75;
-			} else if(Inputs.getCollectorAngle() < 2.28){
-				collectorSpeed = 0.75;
-			} else {
-				collectorSpeed = 0;
-			}
-			*/
 			shooterArmSpeed = 0.3;
 			
 			if(Inputs.getCollectorAngle() > 1.55 && Inputs.getCollectorAngle() < 1.65){
@@ -132,8 +117,11 @@ public class Mechanisms{
 		if(Joysticks.driver.getRawButton(8)){
 			Auto.teleopTarget();
 			Auto.programRunning = true;
+			targeting = true;
 		} else {
 			Auto.programRunning = false;
+			targeting = false;
+			Auto.targetStage = 0;
 		}
 		
 		//override run shooter wheels
@@ -204,6 +192,11 @@ public class Mechanisms{
 			shooterArmSpeed = 0;
 		}
 		
+		//disable PID when not targeting
+		if(Robot.alignmentController.isEnabled() && targeting == false){
+			Robot.alignmentController.disable();
+		}
+			
 		//set all motors
 		setWheels(wheelSpeed);
 		Inputs.doShooter(shooterArmSpeed);

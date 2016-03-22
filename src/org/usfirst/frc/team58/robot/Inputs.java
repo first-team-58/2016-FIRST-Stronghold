@@ -40,6 +40,8 @@ public class Inputs{
 	public static double shooterBeta = 1.65; //90 degrees
 	public static double collectorBeta = 1.54; //90 degrees 
 	
+	public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(gyro, null, null);
+	
 	public static double getCollectorAngle(){
 		//return current angle correcting for differences
 		return collectorAngle.getAverageVoltage();

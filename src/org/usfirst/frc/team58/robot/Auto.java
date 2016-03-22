@@ -1,6 +1,7 @@
 package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
@@ -15,12 +16,10 @@ public class Auto{
 	private static double midXArray[];
 	private static double midYArray[];
 	private static double widthArray[];
-	private static int target;
+	private static int target = -1;
+	private static boolean ready = false;
 	
-	private static int largestWidth = 0;
 	private static int lowest = 0;
-	
-	private static double distance;
 	
 	private static double gyroTarget = 0;
 	
@@ -30,6 +29,7 @@ public class Auto{
 	public static boolean porkulusRunning = false;
 	public static boolean programRunning = false;
 	public static double timeFlag;
+	public static double timeFlag2;
 	public static double programStage = 0;
 	
 	public static int targetStage = 0;
@@ -37,9 +37,6 @@ public class Auto{
 	public static boolean targeting = false;
 	
 	public static double errorConstant = -0.2;
-	
-	public static PIDController alignmentControllerLeft = new PIDController(20, 0, 0, Inputs.gyro, Drive.leftDrive);
-	public static PIDController alignmentControllerRight = new PIDController(20, 0, 0, Inputs.gyro, Drive.rightDrive);
 	
 	private static double[] error = {-1};
 	
@@ -149,7 +146,7 @@ public class Auto{
 	}
 	
 	public static void defenseTouch(){
-		//wheelie
+		//reach the defense
 		if(timer.get() < 1.2){
 			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
@@ -180,55 +177,58 @@ public class Auto{
 		widthArray = grip.getNumberArray("width", error);
 		nObjects = midXArray.length;
 		
-		System.out.println("GYRO: " + (Inputs.gyro.getAngle() - gyroTarget));
-		SmartDashboard.putNumber("GYRO: ", (Inputs.gyro.getAngle() - gyroTarget));
-		
 		if(targetStage == 0){
-			targetStage = 1;
-		} else if(targetStage == 1){
-			System.out.println("FINDING");
+			target = -1;
 			
+			//if no objects found
 			if(nObjects == 0){
+				//reset
 				targetStage = 0;
+			//one object found
 			} else if(nObjects == 1){
+				//assume goal found
 				target = 0;
+			//multiple objects found
 			} else if(nObjects > 1){
 				
-				//find the lowest target to avoid external lighting
+				//find the widest target in shooting range
+				//this should decide between two goals
 				for(int i = 0; i < nObjects; i++){
-					if(midYArray[i] > midYArray[lowest]){
-						lowest = i;
+					if(widthArray[i] > widthArray[lowest] && midYArray[i] < 142 && midYArray[i] > 117){
+						target = i;
 					}
 				} //make. it.go. -"John"
-				
-				target = lowest;
-			}
 			
-			//check if target is in correct range
-			if(midYArray[target] < 142 && midYArray[target] > 117){
-				//mid-x to delta gyro angle algorithm
+				//reset if no target found
+				if(target == -1){
+					targetStage = 0;
+				}
+			}
+
+			//find gyro delta if target found
+			if(target >= 0){
 				gyroTarget = Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 40);
-				targetStage = 2;
-			} else {
 				targetStage = 1;
+				timeFlag = timer.get();
 			}
 			
-		} else if(targetStage == 2){
-			//align to goal
+		} else if(targetStage == 1){
 			
+			//spin shooter wheels
+			Mechanisms.wheelSpeed = 1;
 			
+			//run PID
+			Robot.alignmentController.setSetpoint(gyroTarget);
+			Robot.alignmentController.setAbsoluteTolerance(Robot.absTolerance);
+			Robot.alignmentController.setPercentTolerance(Robot.percentTolerance);
+			Robot.alignmentController.enable();
 			
-			if(Inputs.gyro.getAngle() > gyroTarget + 0.3){
-				Mechanisms.rotateSpeed = 0.55;
-			} else if(Inputs.gyro.getAngle() < gyroTarget - 0.3){
-				Mechanisms.rotateSpeed = -0.55;
+			//if in range
+			if(Inputs.gyro.getAngle() < gyroTarget + 0.3 && Inputs.gyro.getAngle() > gyroTarget - 0.3){
+				ready = true;
 			} else {
-				Mechanisms.rotateSpeed = 0;
-				targetStage = 3;
+				ready = false;
 			}
-			
-		} else if(targetStage == 3){
-			System.out.println("ARM");
 			
 			//aim shooter arm
             if(Inputs.getShooterAngle() > 0.41){
@@ -236,32 +236,23 @@ public class Auto{
             	Mechanisms.shooterArmSpeed = -0.5;
             } else {
             	Mechanisms.shooterArmSpeed = 0;
-            	targetStage = 4;
             }
-            	
-        } else if(targetStage == 4){ //shoot the ball
-			if(shootBegun == false){
-				shootBegun = true;
-				timeFlag = timer.get();
-			}
-			if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
-				Mechanisms.wheelSpeed = 1;
-			} else if(timer.get() - timeFlag < 3.5) {
-				System.out.println("SHOOTING");
-				Mechanisms.wheelSpeed = 1;
-				Mechanisms.feederSpeed = 0;
-			} else { //boulder was fired
-				Mechanisms.wheelSpeed = 0;
-				Mechanisms.feederSpeed = 1; //stop feeder wheel
-				shootBegun = false;
-				targetStage = 0;
-				programRunning = false;
-				targeting = false;
-			}
-		} //ball shoot
 
-	}
+            //do not fire before 1 second of wheel spin
+            if(timer.get()  - timeFlag < 1){
+            	ready = false;
+            }
+            
+			//fire when ready
+			if(ready == true) {
+				//run feeder wheels
+				Mechanisms.feederSpeed = 0;
+			}
+			
+		}
 		
+	}
+	
 	public static void portcullus(){
 		
 		if(timer.get() < 1.2){

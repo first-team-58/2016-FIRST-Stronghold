@@ -2,6 +2,9 @@ package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDController.Tolerance;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
@@ -9,34 +12,50 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
 
-/**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the IterativeRobot
- * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the manifest file in the resource
- * directory.
- */
-
-/*
- * CustomCameraServer class courtesy of FRC 5687
- */
-
 public class Robot extends IterativeRobot {
-    SendableChooser autoChooser;
+    
+	//autonomous
+	static SendableChooser autoChooser;
     private static Timer timer = new Timer();
     
-    CustomCameraServer server;
-    CameraServer ipServer;
+    //cameras
+    static CustomCameraServer server;
+    static CameraServer ipServer;
     public static final String frontCam = "cam0";
     public static final String rearCam = "cam2";
-    USBCamera frontCamera = null;
-    USBCamera rearCamera = null;
-    String camera = frontCam;
-    
+    static USBCamera frontCamera = null;
+    static USBCamera rearCamera = null;
+    static String camera = frontCam;
     public static boolean frontFacing;
+    
+    //PID control
+    public static PIDController alignmentController;
+    public static double percentTolerance;
+    public static double absTolerance;
+    
+    public class PIDDrivetrainOutput implements PIDOutput{
+    	@Override
+        public void pidWrite(double output) {
+    		Mechanisms.rotateSpeed = output;
+        }
+    }
     
     public void robotInit() {
     	
+        //put things on the SmartDashboard
+    	initDashboard();
+    	
+        //start cameras
+        initCameras();
+    	
+    	alignmentController = new PIDController(0, 0, 0, Inputs.gyro, new PIDDrivetrainOutput());
+    	
+        Mechanisms.init();
+        Drive.init();
+        Auto.init();
+    }
+    
+    public static void initDashboard(){
     	//autonomous
     	autoChooser = new SendableChooser();
         autoChooser.addDefault("nothing", 0);
@@ -49,16 +68,17 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putData("Auto choices", autoChooser);
         
         //collector PID
-        SmartDashboard.putNumber("CP", 0);
-        SmartDashboard.putNumber("CI", 0);
-        SmartDashboard.putNumber("CD", 0);
+        SmartDashboard.putNumber("P", 0);
+        SmartDashboard.putNumber("I", 0);
+        SmartDashboard.putNumber("D", 0);
         
-        //shooter PID
-        SmartDashboard.putNumber("SP", 0);
-        SmartDashboard.putNumber("SI", 0);
-        SmartDashboard.putNumber("SD", 0);
-    	
-        //USB camera setup
+        //PID deadband inputs
+        SmartDashboard.putNumber("percent tol", 0);
+        SmartDashboard.putNumber("abs tol", 0);
+    }
+    
+    public static void initCameras(){
+    	//USB camera setup
     	frontFacing = true;
     	initializeCameras();
     	server = CustomCameraServer.getInstance();
@@ -69,17 +89,6 @@ public class Robot extends IterativeRobot {
     	ipServer = CameraServer.getInstance();
     	ipServer.setQuality(50);
     	ipServer.startAutomaticCapture("cam1");
-    	
-    	//calibrate sensors
-    	SmartDashboard.putBoolean("calibrate", false);
-    	
-        Mechanisms.init();
-        Drive.init();
-        Auto.init();
-    }
-    
-    private static void calibrateSensors(){
-    	
     }
     
     public void teleopInit(){
@@ -111,18 +120,24 @@ public class Robot extends IterativeRobot {
     
     public void teleopPeriodic() {
     	
+    	//teleop cycles
     	Drive.driveTeleop();
         Mechanisms.doTeleop();
-        
-        SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
-        
-        
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());
         SmartDashboard.putNumber("collector ", Inputs.collectorAngle.getAverageVoltage());
+        SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
+        //print current error in pid alignment controller
+        SmartDashboard.putNumber("Alignment controller Delta: ", alignmentController.getError());
         LiveWindow.run();
         
+        //DEBUG set values from smartdash input
+        alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+        percentTolerance = SmartDashboard.getNumber("percent tol");
+        absTolerance = SmartDashboard.getNumber("abs tol");
+        
+        //switch cameras on driver command (right bumper)
         if(Joysticks.driver.getRawButton(6)){
         	switchCameras();
         	frontFacing = !frontFacing;
@@ -143,7 +158,7 @@ public class Robot extends IterativeRobot {
     	}
     }
     
-    public void initializeCameras() {
+    public static void initializeCameras() {
         if (frontCamera!=null) {
         	frontCamera.closeCamera();
         	frontCamera = null;
