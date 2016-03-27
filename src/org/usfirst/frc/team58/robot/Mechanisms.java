@@ -8,33 +8,39 @@ import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.filters.LinearDigitalFilter;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Mechanisms{
 	
-	//speed variables for motors and things
 	public static double shooterArmSpeed;
 	public static double collectorSpeed;
 	public static int feederSpeed;
 	public static int intakeSpeed;
 	public static double wheelSpeed;
-	public static double driveSpeed;
-	public static double rotateSpeed;
 	
 	public static boolean shooterAiming;
-	public static boolean shooterDone;
 	
+	public static boolean shooterDone;
+	private static boolean collectorDone;
 	public static boolean facingFront;
 	
-	public static boolean targeting = false;
 	public static double fireTime;
-	//shooter wheels are running
-	private static boolean rev;
-	//used to record wheel spin duration
+	private static double collectorAimBegin;
 	private static double wheelStartTime;
+	
+	private static boolean collectorAiming;
+	public static boolean targeting;
+	private static boolean rev;
 	
 	private static double[] ffGains = {1};
 	private static double[] fbGains = {1};
+	
+	
+	public static boolean pid = false;
+	//PID filters
+	//public static LinearDigitalFilter collectorAngleFilter = new LinearDigitalFilter(Inputs.collectorAngle, ffGains, fbGains);
+	//public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(Inputs.shooterAngle, null, null);
 	
 	//PID controllers
 	public static PIDController shooterController = new PIDController(0, 0, 0.0, Inputs.shooterAngle, Inputs.shooterArm);
@@ -44,12 +50,10 @@ public class Mechanisms{
 	
 	public static void init(){
 		shooterDone = false;
-		shooterDone = false;
 		timer.start();
 		targeting = false;
+		collectorAiming = false;
 		rev = false;
-		driveSpeed = 0;
-		rotateSpeed = 0;
 		facingFront = true;
 	}
 	
@@ -60,25 +64,24 @@ public class Mechanisms{
 		collectorSpeed = 0;
 		wheelSpeed = 0;
 		feederSpeed = 1;
-		intakeSpeed = 1;
+		intakeSpeed = 0;
 		
-		//reset the gyro angle everytime a full (360 degree) rotation has been completed
-		//otherwise, the value accumulates > 360
 		if(Inputs.gyro.getAngle() > 360 || Inputs.gyro.getAngle() < -360){
 			Inputs.gyro.reset();
 		}
-		
+
+		SmartDashboard.putNumber("avg", shooterController.getAvgError());
+
 		//PID tuning
-		collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
-		shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
-		
-		
+		//collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
+		//shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
+				
 		//----------------------OPERATOR CONTROLS------------------------------------------//
 		
 		doShooterOperator();
 		//Raise collector
 		if(Joysticks.operator.getRawButton(4)){
-			collectorSpeed = -0.75;
+			collectorSpeed = -0.65;
 		}
 		//Lower collector
 		if(Joysticks.operator.getRawButton(3)){
@@ -87,7 +90,7 @@ public class Mechanisms{
 		
 		//aim to shooting height
 		if(Joysticks.operator.getRawButton(1)){
-			intakeSpeed = 2;
+			intakeSpeed = -1;
 			feederSpeed = 2;
 			wheelSpeed = -0.35;
 		}
@@ -101,6 +104,15 @@ public class Mechanisms{
 		}
 		
 		if(Joysticks.operator.getRawButton(2)){
+			/*
+			if(Inputs.getCollectorAngle() > 2.315){
+				collectorSpeed = -0.75;
+			} else if(Inputs.getCollectorAngle() < 2.28){
+				collectorSpeed = 0.75;
+			} else {
+				collectorSpeed = 0;
+			}
+			*/
 			shooterArmSpeed = 0.3;
 			
 			if(Inputs.getCollectorAngle() > 1.55 && Inputs.getCollectorAngle() < 1.65){
@@ -113,15 +125,16 @@ public class Mechanisms{
 			}
 		}
 		
-		//auto target
 		if(Joysticks.driver.getRawButton(8)){
-			Auto.teleopTarget();
+			//runPID(SmartDashboard.getNumber("target"));
+			pid = true;
 			Auto.programRunning = true;
-			targeting = true;
+			Auto.shoot();
 		} else {
+			pid = false;
 			Auto.programRunning = false;
-			targeting = false;
-			Auto.targetStage = 0;
+			Auto.runOnce = true;
+			//Robot.alignmentController.disable();
 		}
 		
 		//override run shooter wheels
@@ -139,19 +152,24 @@ public class Mechanisms{
 			feederSpeed = 0;
 		}
 		
+		//disable PID when not targeting
+		//if(Robot.alignmentController.isEnabled() && targeting == false){
+		//	Robot.alignmentController.disable();
+		//}
+		
 		//----------------------------------LIMITS------------------------------------//
 		
 		//enable limits only if sensor is reading
 		if(Inputs.getCollectorAngle() > 0.8){
 			
 			//lower collector limit
-			if(Inputs.getCollectorAngle() > 3.14 && collectorSpeed > 0){
+			if(Inputs.getCollectorAngle() > 2.074 && collectorSpeed > 0){
 				collectorSpeed = 0;
 			}
 		
 			//upper collector limit
 			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() < 1.13){
+				if(Inputs.getCollectorAngle() < 1.145){
 					collectorSpeed = 0;
 				}
 			}
@@ -192,21 +210,12 @@ public class Mechanisms{
 			shooterArmSpeed = 0;
 		}
 		
-		//disable PID when not targeting
-		if(Robot.alignmentController.isEnabled() && targeting == false){
-			Robot.alignmentController.disable();
-		}
-			
 		//set all motors
 		setWheels(wheelSpeed);
 		Inputs.doShooter(shooterArmSpeed);
 		Inputs.doCollector(collectorSpeed);
 		Inputs.setFeeder(feederSpeed);
 		Inputs.setIntake(intakeSpeed);
-		
-		if(Auto.programRunning == true){
-			Drive.drive(driveSpeed, rotateSpeed);
-		}
 		
 	}
 	
@@ -296,6 +305,68 @@ public class Mechanisms{
 		}
 		
 		*/
+	}
+	
+	public static void runPID(double angle) {
+		SmartDashboard.putNumber("Setpoint", angle);
+		SmartDashboard.putNumber("delta", Inputs.gyro.getAngle() - angle);
+		SmartDashboard.putNumber("PID error", Robot.alignmentController.getError());
+		Robot.alignmentController.setPID(SmartDashboard.getNumber("P", .9), SmartDashboard.getNumber("I", 0.1),
+				SmartDashboard.getNumber("D", 0.3));
+		
+		if (!Robot.alignmentController.isEnabled()) {
+			Robot.alignmentController.setSetpoint(angle);
+			Robot.alignmentController.enable();
+		}
+		System.out.println("startAngle: " + Robot.startAngle + " get:" + Robot.alignmentController.get()
+				+  " PID Error:"
+				+ Robot.alignmentController.getError());
+	}
+	
+	public static double getTargetAngle(){
+		
+		double[] error = { -1 };
+		int nObjects;
+		double midXArray[];
+		double midYArray[];
+		double widthArray[];
+		int target;
+		NetworkTable grip = NetworkTable.getTable("GRIP/tapeData");
+		
+		midXArray = grip.getNumberArray("centerX", error);
+		midYArray = grip.getNumberArray("centerY", error);
+		widthArray = grip.getNumberArray("width", error);
+		nObjects = midXArray.length;
+		int lowest = 0;
+		target = -1;
+		
+		Inputs.gyro.reset();
+	
+		// if no objects found
+		if (nObjects == 0) {
+			// reset
+			System.out.println("ERROR");
+			return -666;
+		} else if (nObjects == 1) {
+			// find angle for object
+			target = 0;
+			// multiple objects found
+		} else if (nObjects > 1) {
+			// find the widest target in shooting range
+			for (int i = 0; i < nObjects; i++) {
+				if (widthArray[i] > widthArray[lowest] && midYArray[i] < 142 && midYArray[i] > 117) {
+					target = i;
+				}
+			} // make. it.go. -John
+		}
+		
+		//find angle for target
+		if(target >= 0 && target < midXArray.length){
+			return(Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 40));
+		} else {
+			System.out.println("ERROR");
+			return -666;
+		}
 	}
 	
 }

@@ -1,9 +1,11 @@
 package org.usfirst.frc.team58.robot;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.PIDController;
-import edu.wpi.first.wpilibj.PIDController.Tolerance;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -12,13 +14,25 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
 
+/**
+ * The VM is configured to automatically run this class, and to call the
+ * functions corresponding to each mode, as described in the IterativeRobot
+ * documentation. If you change the name of this class or the package after
+ * creating this project, you must also update the manifest file in the resource
+ * directory.
+ */
+
+/*
+ * CustomCameraServer class courtesy of FRC 5687
+ */
+
 public class Robot extends IterativeRobot {
-    
-	//autonomous
-	static SendableChooser autoChooser;
+	private int m_bufLength = 200;
+	private double m_bufTotal;
+	private Queue<Double> m_buf;
+    static SendableChooser autoChooser;
     private static Timer timer = new Timer();
     
-    //cameras
     static CustomCameraServer server;
     static CameraServer ipServer;
     public static final String frontCam = "cam0";
@@ -26,33 +40,33 @@ public class Robot extends IterativeRobot {
     static USBCamera frontCamera = null;
     static USBCamera rearCamera = null;
     static String camera = frontCam;
-    public static boolean frontFacing;
-    
+    public static double startAngle;
     //PID control
     public static PIDController alignmentController;
     public static double percentTolerance;
     public static double absTolerance;
     
-    public class PIDDrivetrainOutput implements PIDOutput{
-    	@Override
-        public void pidWrite(double output) {
-    		Mechanisms.rotateSpeed = output;
-        }
-    }
+    public static boolean frontFacing;
+    
+    public static PIDOutput58 PIDOut = new PIDOutput58(Drive.leftDrive,Drive.rightDrive);
+    
+    public onTarget yes = new onTarget();
+    
+    
     
     public void robotInit() {
-    	
-        //put things on the SmartDashboard
+    	m_buf = new ArrayDeque<Double>(m_bufLength+1);
     	initDashboard();
-    	
-        //start cameras
         initCameras();
-    	
-    	alignmentController = new PIDController(0, 0, 0, Inputs.gyro, new PIDDrivetrainOutput());
-    	
+        
         Mechanisms.init();
-        Drive.init();
         Auto.init();
+        
+        alignmentController = new PIDController(2, 0, 0, Inputs.gyro, PIDOut);
+        //testing later
+        //alignmentController.setContinuous(true);
+        //alignmentController.setInputRange(0, 5);
+        //alignmentController.setPercentTolerance(.10);
     }
     
     public static void initDashboard(){
@@ -66,15 +80,11 @@ public class Robot extends IterativeRobot {
         autoChooser.addDefault("portcullis", 5);
         autoChooser.addDefault("Cheval De Frise", 6);
         SmartDashboard.putData("Auto choices", autoChooser);
+
+    	SmartDashboard.putNumber("target", 0);
         
-        //collector PID
-        SmartDashboard.putNumber("P", 0);
-        SmartDashboard.putNumber("I", 0);
-        SmartDashboard.putNumber("D", 0);
+        SmartDashboard.putBoolean("ball_set", true);
         
-        //PID deadband inputs
-        SmartDashboard.putNumber("percent tol", 0);
-        SmartDashboard.putNumber("abs tol", 0);
     }
     
     public static void initCameras(){
@@ -92,11 +102,18 @@ public class Robot extends IterativeRobot {
     }
     
     public void teleopInit(){
+    	SmartDashboard.putNumber("P", 0.03);
+    	SmartDashboard.putNumber("I", 0.01);
+    	SmartDashboard.putNumber("D", 0.09);
     	
+		// Robot.alignmentController.setPID(0.5, 0, 0);
+		//Robot.alignmentController.setInputRange(-360, 360);
+		//Robot.alignmentController.setContinuous();
+		//Robot.alignmentController.setOutputRange(-1, 1);
+		//Robot.alignmentController.setAbsoluteTolerance(1);
+
     }
     
-    //initialize autonomous and retrieve program selection from SmartDashboard
-    //you can open SmartDashboard in Eclipse: WPILib->Run SmartDashboard
     public static int program;
     public void autonomousInit() {
     	
@@ -114,34 +131,64 @@ public class Robot extends IterativeRobot {
     }
     
     public void autonomousPeriodic() {
-
     	Auto.run(program);
     }
     
     public void teleopPeriodic() {
-    	
-    	//teleop cycles
-    	Drive.driveTeleop();
-        Mechanisms.doTeleop();
-        
-        //debugging
-        SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());
-        SmartDashboard.putNumber("collector ", Inputs.collectorAngle.getAverageVoltage());
-        SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
-        //print current error in pid alignment controller
-        SmartDashboard.putNumber("Alignment controller Delta: ", alignmentController.getError());
-        LiveWindow.run();
-        
-        //DEBUG set values from smartdash input
-        alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-        percentTolerance = SmartDashboard.getNumber("percent tol");
-        absTolerance = SmartDashboard.getNumber("abs tol");
-        
-        //switch cameras on driver command (right bumper)
+        if(Robot.alignmentController.isEnabled()) {
+        	bufUpdate(alignmentController.getError());
+        } else {
+        	bufClear();
+        }
         if(Joysticks.driver.getRawButton(6)){
         	switchCameras();
         	frontFacing = !frontFacing;
         }
+        
+        Robot.alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+        
+        SmartDashboard.putNumber("ERROR", alignmentController.getError());
+        SmartDashboard.putNumber("AVG ERROR", getAvgError());
+        
+        if(Joysticks.driver.getRawButton(1)){
+        	bufClear();
+        	double angle = Mechanisms.getTargetAngle();
+        	if(angle != -666) {
+        		yes.setSetpoint(angle);
+				Robot.alignmentController.setSetpoint(angle);
+				Robot.alignmentController.enable();
+        	}
+		}
+		
+		if(Joysticks.driver.getRawButton(2)){
+			bufClear();
+			Robot.alignmentController.disable();
+		}
+		
+		if(onTarget()) {
+			Robot.alignmentController.disable();
+			System.out.println("HOOPLAH");
+			//Auto.shoot();
+			//Mechanisms.doTeleop();
+		}
+		
+		//run all teleop functions
+		if(!alignmentController.isEnabled()){
+			Drive.driveTeleop();
+	        Mechanisms.doTeleop();
+		}
+        doSmartDash();
+    }
+    
+    public void doSmartDash(){
+    	SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
+        
+        //debugging
+        SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());
+        SmartDashboard.putNumber("collector ", Inputs.collectorAngle.getAverageVoltage());
+        SmartDashboard.putBoolean("lower shooter ", Inputs.limitDownShooter.get());
+        LiveWindow.run();
+       
     }
     
     public void testPeriodic() {
@@ -195,6 +242,33 @@ public class Robot extends IterativeRobot {
         }
     }
     
+    public boolean onTarget(){
+    	return isAvgErrorValid() && Math.abs(getAvgError()) < 0.35;
+    }
+    
+    public boolean isAvgErrorValid() {
+		return m_buf.size() == m_bufLength;
+	}
+    
+    public double getAvgError() {
+    	double avgError = 0;
+    	
+    	if(m_buf.size() != 0) 
+    		avgError = m_bufTotal / m_buf.size();
+    	return avgError;
+    }
+    
+    public void bufUpdate(double error) {
+    	m_buf.add(error);
+    	m_bufTotal += error;
+    	if(m_buf.size() > m_bufLength)
+    		m_bufTotal -= m_buf.remove();
+    	
+    }
+    
+    public void bufClear() {
+    	m_buf.clear();
+    }
 }
 
 

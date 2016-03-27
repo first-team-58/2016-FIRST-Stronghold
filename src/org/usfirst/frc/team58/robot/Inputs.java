@@ -17,9 +17,9 @@ public class Inputs{
 	public static Talon shooterArm = new Talon(2);
 	static Talon shooterWheelLeft = new Talon(3);
 	static Talon shooterWheelRight = new Talon(4);
+	static Talon intake = new Talon(5);
 	static Talon collector = new Talon(7);
 	static Relay feeder = new Relay(1);
-	static Relay intake = new Relay(0);
 	
 	//analog sensors
 	static AnalogInput collectorAngle = new AnalogInput(0);
@@ -40,8 +40,6 @@ public class Inputs{
 	public static double shooterBeta = 1.65; //90 degrees
 	public static double collectorBeta = 1.54; //90 degrees 
 	
-	public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(gyro, null, null);
-	
 	public static double getCollectorAngle(){
 		//return current angle correcting for differences
 		return collectorAngle.getAverageVoltage();
@@ -52,14 +50,8 @@ public class Inputs{
 		return shooterAngle.getAverageVoltage();
 	}
 	
-	public static void setIntake(int intakeState){
-		if(intakeState == 0){
-			intake.set(Relay.Value.kReverse);
-		} else if(intakeState == 1){
-			intake.set(Relay.Value.kOff);
-		} else if(intakeState == 2){
-			intake.set(Relay.Value.kForward);
-		}
+	public static void setIntake(int intakeSpeed){
+		intake.set(intakeSpeed);
 	}
 	
 	

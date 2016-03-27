@@ -12,11 +12,7 @@ public class Drive {
 	private static double driveSpeed;
 	private static double rotateSpeed;
 	
-	private static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
-	
-	public static void init(){
-
-	}
+	public static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void reset(){
 		
@@ -33,8 +29,9 @@ public class Drive {
 		if(Math.abs(rotate) < 0.1){
 			rotate = 0;
 		}
-		
-		DriveBase.arcadeDrive(drive, rotate);
+		if(!Auto.programRunning){
+			DriveBase.arcadeDrive(drive, rotate);
+		}
 		
 	}
 	
