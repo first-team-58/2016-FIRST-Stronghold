@@ -32,7 +32,7 @@ public class Auto {
 
 	public static void init() {
 		timer.start();
-		initGyro = Inputs.gyro.getAngle();
+		initGyro = Inputs.getAngle();
 	}
 
 	public static void run(int program) {
@@ -93,13 +93,13 @@ public class Auto {
 
 	public static void chevalDeFrise() {
 		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else if (Inputs.limitDownCollecor.get() == true) {
 			Inputs.doCollector(0.75);
 		} else if (timer.get() < 8 || Inputs.limitUpCollector.get() == true) {
 			Inputs.doCollector(-0.75);
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else {
 			Inputs.doCollector(0);
@@ -124,7 +124,7 @@ public class Auto {
 			// if the timer is less than 8 sec, drive forwards in a straight
 			// line
 			if (timer.get() < 8) {
-				double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+				double delta = Math.abs(Inputs.getAngle() - initGyro);
 				Drive.drive(0.75, delta * errorConstant);
 			} else {
 				shoot();
@@ -141,7 +141,7 @@ public class Auto {
 	public static void defenseTouch() {
 		// wheelie
 		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else {
 			Drive.drive(0, 0);
@@ -152,12 +152,12 @@ public class Auto {
 	public static void defenseStraight() {
 		// wheelie
 		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else if (timer.get() < 1.6) {
 			Drive.drive(-1, 0);
 		} else if (timer.get() < 3.5) {
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(1, 0.3);
 		}
 		// shoot
@@ -185,7 +185,7 @@ public class Auto {
 	public static void portcullus() {
 
 		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.gyro.getAngle() - initGyro);
+			double delta = Math.abs(Inputs.getAngle() - initGyro);
 			Drive.drive(0.75, delta * errorConstant);
 		} else if (timer.get() < 4.4) {
 			Drive.drive(0.4, 0);

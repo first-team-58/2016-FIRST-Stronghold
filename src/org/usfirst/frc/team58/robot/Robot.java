@@ -3,24 +3,19 @@ package org.usfirst.frc.team58.robot;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+import com.kauailabs.navx.frc.AHRS;
+
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
-
-/**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the IterativeRobot
- * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the manifest file in the resource
- * directory.
- */
 
 /*
  * CustomCameraServer class courtesy of FRC 5687
@@ -52,8 +47,6 @@ public class Robot extends IterativeRobot {
     
     public onTarget yes = new onTarget();
     
-    
-    
     public void robotInit() {
     	m_buf = new ArrayDeque<Double>(m_bufLength+1);
     	initDashboard();
@@ -63,10 +56,6 @@ public class Robot extends IterativeRobot {
         Auto.init();
         
         alignmentController = new PIDController(2, 0, 0, Inputs.gyro, PIDOut);
-        //testing later
-        //alignmentController.setContinuous(true);
-        //alignmentController.setInputRange(0, 5);
-        //alignmentController.setPercentTolerance(.10);
     }
     
     public static void initDashboard(){
@@ -83,8 +72,7 @@ public class Robot extends IterativeRobot {
 
     	SmartDashboard.putNumber("target", 0);
         
-        SmartDashboard.putBoolean("ball_set", true);
-        
+        SmartDashboard.putBoolean("ball_set", true);   
     }
     
     public static void initCameras(){
@@ -105,13 +93,6 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("P", 0.03);
     	SmartDashboard.putNumber("I", 0.01);
     	SmartDashboard.putNumber("D", 0.09);
-    	
-		// Robot.alignmentController.setPID(0.5, 0, 0);
-		//Robot.alignmentController.setInputRange(-360, 360);
-		//Robot.alignmentController.setContinuous();
-		//Robot.alignmentController.setOutputRange(-1, 1);
-		//Robot.alignmentController.setAbsoluteTolerance(1);
-
     }
     
     public static int program;
@@ -144,8 +125,6 @@ public class Robot extends IterativeRobot {
         	switchCameras();
         	frontFacing = !frontFacing;
         }
-        
-        Robot.alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
         
         SmartDashboard.putNumber("ERROR", alignmentController.getError());
         SmartDashboard.putNumber("AVG ERROR", getAvgError());
@@ -181,7 +160,7 @@ public class Robot extends IterativeRobot {
     }
     
     public void doSmartDash(){
-    	SmartDashboard.putNumber("GYRO ", Inputs.gyro.getAngle());
+    	SmartDashboard.putNumber("GYRO ", Inputs.getAngle());
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.shooterAngle.getAverageVoltage());
@@ -270,135 +249,3 @@ public class Robot extends IterativeRobot {
     	m_buf.clear();
     }
 }
-
-
-	//DYNAMIC COLLECTOR LIMIT (upper)
-	//ensure both sensors are operational
-	/*if(Inputs.getCollectorAngle() > 0.8){
-		//upper collector limit when shooter is down
-		if(Inputs.getShooterAngle() > 1.26){
-			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() > 1.22){
-					collectorSpeed = collectorSpeed;
-				} else if(Inputs.getCollectorAngle() > 1.15){
-					collectorSpeed = -0.35;
-				} else {
-					collectorSpeed = 0;
-				}
-			}
-		} else { //upper collector limit when shooter is up
-			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() > 1.22){
-					collectorSpeed = collectorSpeed;
-				} else if(Inputs.getCollectorAngle() > 1.15){
-					collectorSpeed = -0.35;
-				} else {
-					collectorSpeed = 0;
-				}
-			}
-		}
-	}
-
-public static void teleopTarget(){
-	
-	grip = NetworkTable.getTable("GRIP/tapeData");
-	midXArray = grip.getNumberArray("centerX", error);
-	midYArray = grip.getNumberArray("centerY", error);
-	heightArray = grip.getNumberArray("height", error);
-	nObjects = midXArray.length;
-	
-	if(targetStage == 0){ //raise shooter to pre-angle
-		Mechanisms.shooterAim(1.33, .1);
-		if(Mechanisms.shooterDone == true){
-			Mechanisms.shooterDone = false;
-			targetStage = 1;
-		}
-		
-	} else if(targetStage == 1){
-		if(nObjects == 1){
-			target = 0;
-			targetStage = 2;
-			//find target gyro voltage from midx
-		} else if(nObjects == 2){
-			//more than 1 goal found
-			widthArray = grip.getNumberArray("width", error);
-			largestWidth = 0;
-			
-			//find optimal target
-			//iterate through both contours
-			for(int i = 0; i <= 1; i++){
-				if(widthArray[i] > largestWidth){
-					largestWidth = widthArray[i];
-					target = i;
-				}
-			}
-			targetStage = 2;
-		} else {
-			//more than 2 or 0 contours found
-			//reiterate
-			shootBegun = false;
-			targetStage = 0;
-			programRunning = false;
-			targeting = false;
-		}
-	} else if(targetStage == 2){
-		//get midX values
-		midX = midXArray[target];
-		
-		//align to midpoint x
-		if(midX > 192 && midX < 202){
-			Mechanisms.rotateSpeed = 0;
-			Mechanisms.driveSpeed = 0;
-			targetStage = 3; //begin aiming
-		} else if(midX <= 192){
-			Mechanisms.rotateSpeed = 0.6;
-		} else if(midX >= 202){
-			Mechanisms.rotateSpeed = -0.6;
-		}
-	} else if(targetStage == 3){ //aim shooter arm
-        
-        if(nObjects > 0 && nObjects < target + 2){ //only shoot if the target is defined
-        	//shooter align
-            double angle = (0.00083 * midYArray[target])  + 1.1; 
-            Mechanisms.shooterAim(1.174, 0.1);
-			if(Mechanisms.shooterDone == true){
-				Mechanisms.shooterDone = false;
-				targetStage = 4;
-			}
-        } else {
-        	targetStage = 3;
-        }
-		
-    } else if(targetStage == 4){ //shoot the ball
-		if(shootBegun == false){
-			shootBegun = true;
-			timeFlag = timer.get();
-		}
-		if(timer.get() - timeFlag < 1.5){ //rev for 1.5 seconds
-			Mechanisms.wheelSpeed = 1;
-		} else if(timer.get() - timeFlag < 3.5) {
-			Mechanisms.wheelSpeed = 1;
-			Mechanisms.feederSpeed = 0;
-		} else { //boulder was fired
-			Mechanisms.wheelSpeed = 0;
-			Mechanisms.feederSpeed = 1; //stop feeder wheel
-			shootBegun = false;
-			targetStage = 0;
-			programRunning = false;
-			targeting = false;
-		}
-	} //ball shoot
-}
-
-	//GO TO SHOOTING ANGLE
-	
-	if(Inputs.getShooterAngle() < 1.174 - 0.05){
-		shooterArmSpeed = 0.45;
-	} else if(Inputs.getShooterAngle() > 1.174 + 0.05){
-		shooterArmSpeed = -0.45;
-	} else {
-		shooterArmSpeed = 0;
-	}
-			
-
-*/

@@ -1,10 +1,13 @@
 package org.usfirst.frc.team58.robot;
 
+import com.kauailabs.navx.frc.AHRS;
+
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Relay;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.filters.LinearDigitalFilter;
 
@@ -24,7 +27,7 @@ public class Inputs{
 	//analog sensors
 	static AnalogInput collectorAngle = new AnalogInput(0);
 	static AnalogInput shooterAngle = new AnalogInput(2);
-	static AnalogGyro gyro = new AnalogGyro(1);
+	//static AnalogGyro gyro = new AnalogGyro(1); //old gyro
 	//digital sensors
 	static Encoder encoderShooterLeft = new Encoder(0, 1);
 	static Encoder encoderShooterRight = new Encoder(2, 3);
@@ -35,6 +38,10 @@ public class Inputs{
 	public static DigitalInput limitUpShooter = new DigitalInput(7);
 	public static DigitalInput limitDownShooter = new DigitalInput(8);
 	
+	//navX board- gyro
+	public static AHRS navx = new AHRS(SPI.Port.kMXP);
+    public static PIDSource58 gyro = new PIDSource58(navx);
+    
 	public static double shooterAngleDiff;
 	public static double collectorAngleDiff;
 	public static double shooterBeta = 1.65; //90 degrees
@@ -72,6 +79,15 @@ public class Inputs{
 	//move shooter arm
 	public static void doShooter(double shooterArmSpeed){
 		shooterArm.set(shooterArmSpeed);
+	}
+	
+	//getters
+	public static double getAngle(){
+		return navx.getAngle();
+	}
+	
+	public static void resetGyro(){
+		navx.reset();
 	}
 
 }

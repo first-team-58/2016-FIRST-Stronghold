@@ -66,8 +66,8 @@ public class Mechanisms{
 		feederSpeed = 1;
 		intakeSpeed = 0;
 		
-		if(Inputs.gyro.getAngle() > 360 || Inputs.gyro.getAngle() < -360){
-			Inputs.gyro.reset();
+		if(Inputs.getAngle() > 360 || Inputs.getAngle() < -360){
+			Inputs.resetGyro();
 		}
 
 		SmartDashboard.putNumber("avg", shooterController.getAvgError());
@@ -151,11 +151,6 @@ public class Mechanisms{
 		if(Joysticks.operator.getRawButton(6) && rev == true){
 			feederSpeed = 0;
 		}
-		
-		//disable PID when not targeting
-		//if(Robot.alignmentController.isEnabled() && targeting == false){
-		//	Robot.alignmentController.disable();
-		//}
 		
 		//----------------------------------LIMITS------------------------------------//
 		
@@ -309,7 +304,7 @@ public class Mechanisms{
 	
 	public static void runPID(double angle) {
 		SmartDashboard.putNumber("Setpoint", angle);
-		SmartDashboard.putNumber("delta", Inputs.gyro.getAngle() - angle);
+		SmartDashboard.putNumber("delta", Inputs.getAngle() - angle);
 		SmartDashboard.putNumber("PID error", Robot.alignmentController.getError());
 		Robot.alignmentController.setPID(SmartDashboard.getNumber("P", .9), SmartDashboard.getNumber("I", 0.1),
 				SmartDashboard.getNumber("D", 0.3));
@@ -340,7 +335,7 @@ public class Mechanisms{
 		int lowest = 0;
 		target = -1;
 		
-		Inputs.gyro.reset();
+		Inputs.resetGyro();
 	
 		// if no objects found
 		if (nObjects == 0) {
@@ -357,12 +352,12 @@ public class Mechanisms{
 				if (widthArray[i] > widthArray[lowest] && midYArray[i] < 142 && midYArray[i] > 117) {
 					target = i;
 				}
-			} // make. it.go. -John
+			} // "make. it.go." -John
 		}
 		
 		//find angle for target
 		if(target >= 0 && target < midXArray.length){
-			return(Inputs.gyro.getAngle() + (0.24 * midXArray[target] - 40));
+			return(Inputs.getAngle() + (0.24 * midXArray[target] - 40));
 		} else {
 			System.out.println("ERROR");
 			return -666;
