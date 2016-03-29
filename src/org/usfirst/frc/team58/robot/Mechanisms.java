@@ -15,7 +15,7 @@ public class Mechanisms{
 	
 	public static double shooterArmSpeed;
 	public static double collectorSpeed;
-	public static int feederSpeed;
+	public static double feederSpeed;
 	public static int intakeSpeed;
 	public static double wheelSpeed;
 	
@@ -36,13 +36,6 @@ public class Mechanisms{
 	private static double[] ffGains = {1};
 	private static double[] fbGains = {1};
 	
-	
-	public static boolean pid = false;
-	//PID filters
-	//public static LinearDigitalFilter collectorAngleFilter = new LinearDigitalFilter(Inputs.collectorAngle, ffGains, fbGains);
-	//public static LinearDigitalFilter shooterAngleFilter = new LinearDigitalFilter(Inputs.shooterAngle, null, null);
-	
-	//PID controllers
 	public static PIDController shooterController = new PIDController(0, 0, 0.0, Inputs.shooterAngle, Inputs.shooterArm);
 	public static PIDController collectorController = new PIDController(0, 0, 0.0, Inputs.collectorAngle, Inputs.collector);
 	
@@ -63,26 +56,16 @@ public class Mechanisms{
 		shooterArmSpeed = 0;
 		collectorSpeed = 0;
 		wheelSpeed = 0;
-		feederSpeed = 1;
+		feederSpeed = 0;
 		intakeSpeed = 0;
 		
-		if(Inputs.getAngle() > 360 || Inputs.getAngle() < -360){
-			Inputs.resetGyro();
-		}
-
-		SmartDashboard.putNumber("avg", shooterController.getAvgError());
-
-		//PID tuning
-		//collectorController.setPID(SmartDashboard.getNumber("CP"), SmartDashboard.getNumber("CI"), SmartDashboard.getNumber("CD"));
-		//shooterController.setPID(SmartDashboard.getNumber("SP"), SmartDashboard.getNumber("SI"), SmartDashboard.getNumber("SD"));
-				
-		//----------------------OPERATOR CONTROLS------------------------------------------//
-		
 		doShooterOperator();
+		
 		//Raise collector
 		if(Joysticks.operator.getRawButton(4)){
 			collectorSpeed = -0.65;
 		}
+		
 		//Lower collector
 		if(Joysticks.operator.getRawButton(3)){
 			collectorSpeed = 0.75;
@@ -91,7 +74,7 @@ public class Mechanisms{
 		//aim to shooting height
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = -1;
-			feederSpeed = 2;
+			feederSpeed = -0.5;
 			wheelSpeed = -0.35;
 		}
 		
@@ -104,15 +87,6 @@ public class Mechanisms{
 		}
 		
 		if(Joysticks.operator.getRawButton(2)){
-			/*
-			if(Inputs.getCollectorAngle() > 2.315){
-				collectorSpeed = -0.75;
-			} else if(Inputs.getCollectorAngle() < 2.28){
-				collectorSpeed = 0.75;
-			} else {
-				collectorSpeed = 0;
-			}
-			*/
 			shooterArmSpeed = 0.3;
 			
 			if(Inputs.getCollectorAngle() > 1.55 && Inputs.getCollectorAngle() < 1.65){
@@ -123,18 +97,6 @@ public class Mechanisms{
 			} else {
 				collectorSpeed = -0.7;
 			}
-		}
-		
-		if(Joysticks.driver.getRawButton(8)){
-			//runPID(SmartDashboard.getNumber("target"));
-			pid = true;
-			Auto.programRunning = true;
-			Auto.shoot();
-		} else {
-			pid = false;
-			Auto.programRunning = false;
-			Auto.runOnce = true;
-			//Robot.alignmentController.disable();
 		}
 		
 		//override run shooter wheels
@@ -149,60 +111,7 @@ public class Mechanisms{
 		
 		//spin feeder wheels to fire boulder
 		if(Joysticks.operator.getRawButton(6) && rev == true){
-			feederSpeed = 0;
-		}
-		
-		//----------------------------------LIMITS------------------------------------//
-		
-		//enable limits only if sensor is reading
-		if(Inputs.getCollectorAngle() > 0.8){
-			
-			//lower collector limit
-			if(Inputs.getCollectorAngle() > 2.074 && collectorSpeed > 0){
-				collectorSpeed = 0;
-			}
-		
-			//upper collector limit
-			if(collectorSpeed < 0){
-				if(Inputs.getCollectorAngle() < 1.145){
-					collectorSpeed = 0;
-				}
-			}
-			
-		}
-		
-		//shooter arm lower limit
-		if(Inputs.getShooterAngle() >  1.12 && shooterArmSpeed > 0){
-			shooterArmSpeed = 0;
-		} else if(Inputs.getShooterAngle() > 0.95 && shooterArmSpeed > 0){
-		
-			shooterArmSpeed = shooterArmSpeed * 0.5;
-		}
-		
-		//shooter arm upper limit
-		if(Inputs.getShooterAngle() < 0.4 && shooterArmSpeed < 0){
-			shooterArmSpeed = 0;
-		}
-		
-		//hard limits
-		if(Inputs.ballStop.get() == true && feederSpeed == 2){
-			feederSpeed = 1;
-		}
-		
-		if(Inputs.limitUpCollector.get() == false && collectorSpeed < 0){
-			collectorSpeed = 0;
-		}
-		
-		if(Inputs.limitDownCollecor.get() == false && collectorSpeed > 0){
-			collectorSpeed = 0;
-		}
-		
-		if(Inputs.limitUpShooter.get() == false && shooterArmSpeed < 0){
-			shooterArmSpeed = 0;
-		}
-		
-		if(Inputs.limitDownShooter.get() == false && shooterArmSpeed > 0){
-			shooterArmSpeed = 0;
+			feederSpeed = 0.5;
 		}
 		
 		//set all motors
@@ -300,22 +209,6 @@ public class Mechanisms{
 		}
 		
 		*/
-	}
-	
-	public static void runPID(double angle) {
-		SmartDashboard.putNumber("Setpoint", angle);
-		SmartDashboard.putNumber("delta", Inputs.getAngle() - angle);
-		SmartDashboard.putNumber("PID error", Robot.alignmentController.getError());
-		Robot.alignmentController.setPID(SmartDashboard.getNumber("P", .9), SmartDashboard.getNumber("I", 0.1),
-				SmartDashboard.getNumber("D", 0.3));
-		
-		if (!Robot.alignmentController.isEnabled()) {
-			Robot.alignmentController.setSetpoint(angle);
-			Robot.alignmentController.enable();
-		}
-		System.out.println("startAngle: " + Robot.startAngle + " get:" + Robot.alignmentController.get()
-				+  " PID Error:"
-				+ Robot.alignmentController.getError());
 	}
 	
 	public static double getTargetAngle(){

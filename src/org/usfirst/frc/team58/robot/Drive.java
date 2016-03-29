@@ -9,9 +9,6 @@ public class Drive {
 	public static Talon leftDrive = new Talon(0);
 	public static Talon rightDrive = new Talon(1);
 	
-	private static double driveSpeed;
-	private static double rotateSpeed;
-	
 	public static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
 	
 	public static void reset(){
@@ -22,15 +19,17 @@ public class Drive {
 		
 		double rotate = Joysticks.driver.getX() * -1;
 		double drive = Joysticks.driver.getY() * -1;
+		
+		//slow button RT
 		if(Joysticks.driver.getTwist() > 0){
+			//cut rotate and drive speed
 			rotate = rotate * 0.65;
 			drive = drive * 0.5;
 		}
+		
+		//jostick deadband
 		if(Math.abs(rotate) < 0.1){
 			rotate = 0;
-		}
-		if(!Auto.programRunning){
-			DriveBase.arcadeDrive(drive, rotate);
 		}
 		
 	}
