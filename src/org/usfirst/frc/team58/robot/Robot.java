@@ -3,16 +3,11 @@ package org.usfirst.frc.team58.robot;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import com.kauailabs.navx.frc.AHRS;
-
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.PIDController;
-import edu.wpi.first.wpilibj.PIDOutput;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.vision.USBCamera;
@@ -75,10 +70,9 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber("P", 0.03);
     	SmartDashboard.putNumber("I", 0.01);
     	SmartDashboard.putNumber("D", 0.09);
-    	SmartDashboard.putNumber("target", 0);
         
     	//driver indicators
-        SmartDashboard.putBoolean("ball_set", true);   
+        SmartDashboard.putBoolean("ball_set", true);
     }
     
     public static void initCameras(){
@@ -96,7 +90,7 @@ public class Robot extends IterativeRobot {
     }
     
     public void teleopInit(){
-    	S
+    	
     }
     
     public static int program;
@@ -196,6 +190,8 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("ERROR", alignmentController.getError());
         SmartDashboard.putNumber("AVG ERROR", getAvgError());
         
+        alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+        
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
         SmartDashboard.putNumber("collector ", Inputs.getCollectorAngle());
@@ -273,7 +269,6 @@ public class Robot extends IterativeRobot {
     	m_bufTotal += error;
     	if(m_buf.size() > m_bufLength)
     		m_bufTotal -= m_buf.remove();
-    	
     }
     
     public static void bufClear() {

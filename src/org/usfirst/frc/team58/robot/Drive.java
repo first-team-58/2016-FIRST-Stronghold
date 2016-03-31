@@ -32,6 +32,8 @@ public class Drive {
 			rotate = 0;
 		}
 		
+		DriveBase.arcadeDrive(drive, rotate);
+		
 	}
 	
 	public static void drive(double driveSpeed, double rotateSpeed){

@@ -2,14 +2,11 @@ package org.usfirst.frc.team58.robot;
 
 import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.filters.LinearDigitalFilter;
 
 public class Inputs{
 	
@@ -41,6 +38,7 @@ public class Inputs{
 	//navX board - gyroscope
 	public static AHRS navx = new AHRS(SPI.Port.kMXP);
     public static PIDSource58 gyro = new PIDSource58(navx);
+    public static double GyroAngle;
     
     //sensor calibration
 	private double shooterAngleDiff;
@@ -51,16 +49,16 @@ public class Inputs{
 	//periodic loop
 	//run in autonomousPeriodic and teleopPeriodic
 	public static void update(){
-		if(getAngle() > 360 || getAngle() < -360){
-			resetGyro();
-		}
+		
+	
+		
 	}
 	
 	//getters
 	
 	//returns gyroscope angle
 	public static double getAngle(){
-		return navx.getAngle();
+		return navx.getYaw();
 	}
 		
 	//returns collector accelerometer value
@@ -83,9 +81,10 @@ public class Inputs{
 	public static void setFeeder(double feederSpeed){
 		double speed = feederSpeed;
 		//hard limits
+		/*
 		if(Inputs.ballStop.get() == true && speed < 0){
 			speed = 0;
-		}		
+		} */		
 		feeder.set(speed);
 	}
 	
@@ -145,7 +144,7 @@ public class Inputs{
 	}
 	
 	public static void resetGyro(){
-		navx.reset();
+		
 	}
 
 }

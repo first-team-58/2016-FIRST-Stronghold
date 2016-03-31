@@ -111,7 +111,7 @@ public class Mechanisms{
 		
 		//spin feeder wheels to fire boulder
 		if(Joysticks.operator.getRawButton(6) && rev == true){
-			feederSpeed = 0.5;
+			feederSpeed = -0.5;
 		}
 		
 		//set all motors
