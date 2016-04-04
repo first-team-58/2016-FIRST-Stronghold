@@ -50,8 +50,6 @@ public class Inputs{
 	//run in autonomousPeriodic and teleopPeriodic
 	public static void update(){
 		
-	
-		
 	}
 	
 	//getters
@@ -80,11 +78,11 @@ public class Inputs{
 	
 	public static void setFeeder(double feederSpeed){
 		double speed = feederSpeed;
-		//hard limits
-		/*
-		if(Inputs.ballStop.get() == true && speed < 0){
+		//hard limits. We removed comment around Line 84 and 87.  Additionally changed this from true to false.  Why the speed < 0 Statement?
+		
+		if(Inputs.ballStop.get() == true && speed > 0){
 			speed = 0;
-		} */		
+		} 		
 		feeder.set(speed);
 	}
 	
@@ -94,7 +92,7 @@ public class Inputs{
 		//enable limits only if sensor is reading
 		if(Inputs.getCollectorAngle() > 0.8){	
 			//lower collector limit
-			if(Inputs.getCollectorAngle() > 2.074 && speed > 0){
+			if(Inputs.getCollectorAngle() > 2.01 && speed > 0){
 				speed = 0;
 			}
 			//upper collector limit
@@ -129,14 +127,14 @@ public class Inputs{
 		}
 		
 		//shooter arm lower limit
-		if(Inputs.getShooterAngle() >  1.12 && speed > 0){
+		if(Inputs.getShooterAngle() > 1.26 && speed > 0){
 			speed = 0;
 		} else if(Inputs.getShooterAngle() > 0.95 && speed > 0){
 			speed = speed * 0.5;
 		}
-				
+		
 		//shooter arm upper limit
-		if(Inputs.getShooterAngle() < 0.4 && speed < 0){
+		if(Inputs.getShooterAngle() < 0.2 && speed < 0){
 			speed = 0;
 		}
 		
@@ -144,7 +142,7 @@ public class Inputs{
 	}
 	
 	public static void resetGyro(){
-		
+		navx.zeroYaw();
 	}
 
 }

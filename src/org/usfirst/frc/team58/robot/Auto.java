@@ -10,10 +10,9 @@ public class Auto {
 
 	private static Timer timer = new Timer();
 	
-	public static boolean runOnce = true;
+	public static boolean startedTarget = false;
 
 	public static double gyroTarget = 0;
-
 	private static double initGyro;
 
 	// program variable
@@ -65,6 +64,33 @@ public class Auto {
 		}
 	}
 
+	public static void target(){
+		if(startedTarget == false){
+			Robot.initPID();
+			startedTarget = true;
+		}
+		
+		//run the controller and update
+		Robot.runPID();
+		
+		//check if on target
+		if(ready == true){
+			//fire
+			Mechanisms.feederSpeed = -0.5;
+		}
+		
+		//raise shooter arm
+		if(Inputs.getShooterAngle()  > 0.41){
+			Mechanisms.shooterArmSpeed = -0.5;
+		} else {
+			Mechanisms.shooterArmSpeed = 0;
+		}
+		
+		//spin wheels
+		Mechanisms.wheelSpeed = -0.5;
+		
+	}
+	
 	// stage arms in up positions for match start
 	public static void reset() {
 		// shooter to upper limit

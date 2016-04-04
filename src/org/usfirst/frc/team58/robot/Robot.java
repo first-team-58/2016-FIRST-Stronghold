@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj.vision.USBCamera;
  */
 
 public class Robot extends IterativeRobot {
-	private static int m_bufLength = 200;
+	private static int m_bufLength = 100;
 	private static double m_bufTotal;
 	private static Queue<Double> m_buf;
     static SendableChooser autoChooser;
@@ -40,6 +40,8 @@ public class Robot extends IterativeRobot {
     
     public static PIDOutput58 PIDOut = new PIDOutput58(Drive.leftDrive,Drive.rightDrive);
     
+    public static double deadband;
+    public static double minSpeed;
     public static onTarget yes = new onTarget();
     public static boolean PIDbegun = false;
     
@@ -70,9 +72,9 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber("P", 0.03);
     	SmartDashboard.putNumber("I", 0.01);
     	SmartDashboard.putNumber("D", 0.09);
-        
-    	//driver indicators
-        SmartDashboard.putBoolean("ball_set", true);
+    	
+    	SmartDashboard.putNumber("deadband", 0.5);
+    	SmartDashboard.putNumber("minSpeed", 0.35);
     }
     
     public static void initCameras(){
@@ -131,12 +133,20 @@ public class Robot extends IterativeRobot {
         	initPID();
 		}
 		
+        runPID();
+        
         //stop PID
 		if(Joysticks.driver.getRawButton(2)){
 			stopPID();
 		}
 		
-		runPID();
+		//stop if on target
+    	if(onTarget()) {
+    		System.out.println("TARGET LOCKED");
+    		bufClear();
+    		Robot.alignmentController.disable();
+    		PIDbegun = false;
+    	}
 		
 		//drive teleop if PID is disabled
 		if(!alignmentController.isEnabled()){
@@ -160,10 +170,14 @@ public class Robot extends IterativeRobot {
     }
     
     public static void runPID(){
+    	
     	//stop if on target
     	if(onTarget()) {
+    		System.out.println("TARGET LOCKED");
+    		bufClear();
     		Robot.alignmentController.disable();
-    		System.out.println("HOOPLAH");
+    		PIDbegun = false;
+    		Auto.ready = true;
     	}
     	
     	//get error when PID enabled
@@ -185,12 +199,18 @@ public class Robot extends IterativeRobot {
     
     public void doSmartDash(){
     	SmartDashboard.putNumber("GYRO ", Inputs.getAngle());
-        
+    	
     	//PID values
     	SmartDashboard.putNumber("ERROR", alignmentController.getError());
         SmartDashboard.putNumber("AVG ERROR", getAvgError());
+        SmartDashboard.getNumber("deadband", deadband);
+        SmartDashboard.getNumber("minSpeed", minSpeed);
+        SmartDashboard.putNumber("SETPOINT", alignmentController.getSetpoint());
         
         alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+        
+        //driver indicators
+        SmartDashboard.putBoolean("ball_set", onTarget());
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
@@ -249,7 +269,8 @@ public class Robot extends IterativeRobot {
     
     //check if we're on target
     public static boolean onTarget(){
-    	return isAvgErrorValid() && Math.abs(getAvgError()) < 0.35;
+    	
+    	return isAvgErrorValid() && Math.abs(getAvgError()) < 0.4;
     }
     
     public static boolean isAvgErrorValid() {

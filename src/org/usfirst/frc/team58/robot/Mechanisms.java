@@ -74,8 +74,8 @@ public class Mechanisms{
 		//aim to shooting height
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = -1;
-			feederSpeed = -0.5;
-			wheelSpeed = -0.35;
+			feederSpeed = 0.5;
+			wheelSpeed = 0.35;
 		}
 		
 		if(Joysticks.operator.getThrottle() > 0){
@@ -93,15 +93,15 @@ public class Mechanisms{
 				//stop
 				collectorSpeed = 0;
 			} else if(Inputs.getCollectorAngle() <= 1.55){
-				collectorSpeed = 0.7;
+				collectorSpeed = 0.5;
 			} else {
-				collectorSpeed = -0.7;
+				collectorSpeed = -0.5;
 			}
 		}
 		
 		//override run shooter wheels
 		if(Joysticks.operator.getRawButton(5)){
-			wheelSpeed = 1;
+			wheelSpeed = -0.5;
 		} //do not put an else block here
 		
 		//stop rev if button not pressed only during shooter override
@@ -112,6 +112,16 @@ public class Mechanisms{
 		//spin feeder wheels to fire boulder
 		if(Joysticks.operator.getRawButton(6) && rev == true){
 			feederSpeed = -0.5;
+		//changed feederSpeed = -0.5 to 0.5;
+		}
+		
+		//auto targeting
+		if(Joysticks.driver.getRawButton(8)){
+			Auto.target();
+		} else {
+			Auto.startedTarget = false;
+			Auto.ready = false;
+			Robot.stopPID();
 		}
 		
 		//set all motors
@@ -227,8 +237,6 @@ public class Mechanisms{
 		nObjects = midXArray.length;
 		int lowest = 0;
 		target = -1;
-		
-		Inputs.resetGyro();
 	
 		// if no objects found
 		if (nObjects == 0) {
@@ -250,7 +258,7 @@ public class Mechanisms{
 		
 		//find angle for target
 		if(target >= 0 && target < midXArray.length){
-			return(Inputs.getAngle() + (0.24 * midXArray[target] - 40));
+			return(Inputs.getAngle() + (0.24 * midXArray[target] - 41.5));
 		} else {
 			System.out.println("ERROR");
 			return -666;
