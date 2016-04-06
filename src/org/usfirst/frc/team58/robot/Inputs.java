@@ -82,7 +82,8 @@ public class Inputs{
 		
 		if(Inputs.ballStop.get() == true && speed > 0){
 			speed = 0;
-		} 		
+		} 
+		
 		feeder.set(speed);
 	}
 	
@@ -127,7 +128,7 @@ public class Inputs{
 		}
 		
 		//shooter arm lower limit
-		if(Inputs.getShooterAngle() > 1.26 && speed > 0){
+		if(Inputs.getShooterAngle() > 1.29 && speed > 0){
 			speed = 0;
 		} else if(Inputs.getShooterAngle() > 0.95 && speed > 0){
 			speed = speed * 0.5;

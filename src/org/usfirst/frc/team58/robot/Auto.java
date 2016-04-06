@@ -87,7 +87,7 @@ public class Auto {
 		}
 		
 		//spin wheels
-		Mechanisms.wheelSpeed = -0.5;
+		//Mechanisms.wheelSpeed = -0.5;
 		
 	}
 	

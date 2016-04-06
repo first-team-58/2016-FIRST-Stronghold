@@ -3,6 +3,7 @@ package org.usfirst.frc.team58.robot;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Drive {
 	
@@ -19,6 +20,8 @@ public class Drive {
 		
 		double rotate = Joysticks.driver.getX() * -1;
 		double drive = Joysticks.driver.getY() * -1;
+		
+		SmartDashboard.putNumber("ROTATE", rotate);
 		
 		//slow button RT
 		if(Joysticks.driver.getTwist() > 0){

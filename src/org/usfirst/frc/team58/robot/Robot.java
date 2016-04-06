@@ -210,7 +210,7 @@ public class Robot extends IterativeRobot {
         alignmentController.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
         
         //driver indicators
-        SmartDashboard.putBoolean("ball_set", onTarget());
+        SmartDashboard.putBoolean("ball_set", Inputs.ballStop.get());
         
         //debugging
         SmartDashboard.putNumber("shooter ", Inputs.getShooterAngle());
@@ -270,7 +270,7 @@ public class Robot extends IterativeRobot {
     //check if we're on target
     public static boolean onTarget(){
     	
-    	return isAvgErrorValid() && Math.abs(getAvgError()) < 0.4;
+    	return isAvgErrorValid() && Math.abs(getAvgError()) < 0.2;
     }
     
     public static boolean isAvgErrorValid() {

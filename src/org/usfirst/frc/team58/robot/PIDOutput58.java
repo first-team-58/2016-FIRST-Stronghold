@@ -17,9 +17,11 @@ public class PIDOutput58 implements PIDOutput {
 	@Override
 	public void pidWrite(double output) {
 		
-		if(Math.abs(output) < 0) {
-			output = 0;
+		
+		if(Math.abs(output) < 0.45) {
+			output = 0.35;
 		}
+		
 		
 		Drive.drive(0, -output);
 	}

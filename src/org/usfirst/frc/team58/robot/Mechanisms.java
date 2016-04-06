@@ -75,11 +75,17 @@ public class Mechanisms{
 		if(Joysticks.operator.getRawButton(1)){
 			intakeSpeed = -1;
 			feederSpeed = 0.5;
-			wheelSpeed = 0.35;
+			wheelSpeed = 0.25;
 		}
 		
 		if(Joysticks.operator.getThrottle() > 0){
-			shooterAim(1.46, 0.2);
+			if(Inputs.getShooterAngle() > 0.3){
+				shooterArmSpeed = -0.5;
+			} else if(Inputs.getShooterAngle() < 0.21){
+				shooterArmSpeed = 0.5;
+			} else {
+				shooterArmSpeed = 0;
+			}
 		}
 		
 		if(Joysticks.operator.getTwist() > 0){
