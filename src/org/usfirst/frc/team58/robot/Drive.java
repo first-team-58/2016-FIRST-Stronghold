@@ -1,46 +1,50 @@
+/*
+ * Drive.java
+ * 
+ * This class handles controlling the driving of the robot, it interfaces with the outputs and inputs
+ */
+
 package org.usfirst.frc.team58.robot;
 
 import edu.wpi.first.wpilibj.RobotDrive;
-import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Drive {
+	private static RobotDrive drive = new RobotDrive(Outputs.getLeftDrive(), Outputs.getRightDrive());// inits the drivetrain
 	
-	public static Talon leftDrive = new Talon(0);
-	public static Talon rightDrive = new Talon(1);
-	
-	public static RobotDrive DriveBase = new RobotDrive(leftDrive, rightDrive);
-	
-	public static void reset(){
-		
+	public static RobotDrive getDrive() { //Returns the robotdrive object so the motors can be controlled remotely
+		return drive;
 	}
 	
-	public static void driveTeleop(){
+	//Code that runs in teleop when the targeting code isn't running
+	public static void doDrive() {
+		System.out.println("running drive");
+		boolean test = false;
 		
-		double rotate = Joysticks.driver.getX() * -1;
-		double drive = Joysticks.driver.getY() * -1;
-		
-		SmartDashboard.putNumber("ROTATE", rotate);
-		
-		//slow button RT
-		if(Joysticks.driver.getTwist() > 0){
-			//cut rotate and drive speed
-			rotate = rotate * 0.65;
-			drive = drive * 0.5;
+		try {
+			test = Targeting.getController().getEnabled();
+		} catch(Exception e){
+			test = false;
+			Targeting.initTargeting();
 		}
-		
-		//jostick deadband
-		if(Math.abs(rotate) < 0.1){
-			rotate = 0;
+		System.out.println(test);
+		if(!test) { //If targeting code is not enabled
+			double rotate = Inputs.getDriverStick().getX(); //X value is turning value
+			double move = Inputs.getDriverStick().getY(); //Y value is movement value
+			
+			if(Inputs.getDriverStick().getTwist() > 0) { //sets the speeds to half if the trigger is held down
+				rotate = rotate * .5;
+				move = move * .5;
+			}
+			
+			if(Math.abs(rotate) < .1) { //Sets a deadband on the controller for turning
+				rotate = 0;
+			}
+			System.out.println("rotate: " + rotate + "move" + move);
+			drive.arcadeDrive(move, rotate); //Tells the drive train to drive the motors
 		}
-		
-		DriveBase.arcadeDrive(drive, rotate);
-		
 	}
 	
-	public static void drive(double driveSpeed, double rotateSpeed){
-		DriveBase.arcadeDrive(driveSpeed, rotateSpeed);
+	public static void initDrive() {
+		
 	}
-	
 }

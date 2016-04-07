@@ -1,149 +1,134 @@
+/*
+ * Inputs.java 
+ * 
+ * This class is designed to handle all the inputs to the robot
+ * 
+ * Public methods include accessors to robot sensors and such
+ * 
+ * This class should not have any mutators.
+ * 
+ */
 package org.usfirst.frc.team58.robot;
-
-import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.Talon;
+import com.kauailabs.navx.frc.AHRS;
 
-public class Inputs{
+public class Inputs {
 	
-	static double gwenShooterDelta = -0.008;
-	static double gwenCollectorDelta = -0.04;
+	//Angle sensors
+	private static AnalogInput collectorAngle = new AnalogInput(0);
+	private static AnalogInput shooterAngle = new AnalogInput(2);
 	
-	//Talons
-	static Talon shooterArm = new Talon(2);
-	static Talon shooterWheelLeft = new Talon(3);
-	static Talon shooterWheelRight = new Talon(4);
-	static Talon intake = new Talon(5);
-	static Talon collector = new Talon(7);
-	static Talon feeder = new Talon(6);
+	//Encoders
+	private static Encoder leftShooterEncoder = new Encoder(0,1);
+	private static Encoder rightShooterEncoder = new Encoder(2,3);
 	
-	//Analog sensors
-	static AnalogInput collectorAngle = new AnalogInput(0);
-	static AnalogInput shooterAngle = new AnalogInput(2);
+	//Limit Switches
+	private static DigitalInput collectorUpLimit = new DigitalInput(4);
+	private static DigitalInput collectorDownLimit = new DigitalInput(5);
+	private static DigitalInput ballLimit = new DigitalInput(6);
+	private static DigitalInput shooterUpLimit = new DigitalInput(7);
+	private static DigitalInput shooterDownLimit = new DigitalInput(8);
 	
-	//Digital sensors
-	public static Encoder encoderShooterLeft = new Encoder(0, 1);
-	public static Encoder encoderShooterRight = new Encoder(2, 3);
+	//Navx-mxp gyro sensor
+	private static AHRS navx = new AHRS(SPI.Port.kMXP);
 	
-	public static DigitalInput limitUpCollector = new DigitalInput(4);
-	public static DigitalInput limitDownCollecor = new DigitalInput(5);
-	public static DigitalInput ballStop = new DigitalInput(6);
-	public static DigitalInput limitUpShooter = new DigitalInput(7);
-	public static DigitalInput limitDownShooter = new DigitalInput(8);
+	//Joysticks
+	private static Joystick driverStick = new Joystick(0);
+	private static Joystick operatorStick = new Joystick(1);
 	
-	//navX board - gyroscope
-	public static AHRS navx = new AHRS(SPI.Port.kMXP);
-    public static PIDSource58 gyro = new PIDSource58(navx);
-    public static double GyroAngle;
-    
-    //sensor calibration
-	private double shooterAngleDiff;
-	private double collectorAngleDiff;
-	private double shooterBeta = 1.65; //@ 90 degrees
-	private double collectorBeta = 1.54; //@ 90 degrees
-	
-	//periodic loop
-	//run in autonomousPeriodic and teleopPeriodic
-	public static void update(){
-		
-	}
-	
-	//getters
-	
-	//returns gyroscope angle
-	public static double getAngle(){
-		return navx.getYaw();
-	}
-		
-	//returns collector accelerometer value
-	public static double getCollectorAngle(){
+	//Accessor Methods: These are how you access the inputs
+	/**
+	 * @return the collectorAngle
+	 */
+	public static double getCollectorAngle() {
 		return collectorAngle.getAverageVoltage();
 	}
-	
-	//returns shooter IR value
-	public static double getShooterAngle(){
+	/*
+	 * @return the collectorAngle sensor
+	 */
+	public static AnalogInput getCollectorAngleSensor() {
+		return collectorAngle;
+	}
+	/**
+	 * @return the shooterAngle
+	 */
+	public static double getShooterAngle() {
 		return shooterAngle.getAverageVoltage();
 	}
-	
-	//setters
-	
-	public static void setIntake(double intakeSpeed){
-		double speed = intakeSpeed;
-		intake.set(speed);
+	/**
+	 * @return the shooterAngle sensor
+	 */
+	public static AnalogInput getShooterAngleSensor() {
+		return shooterAngle;
+	}
+	/**
+	 * @return the leftShooterEncoder
+	 */
+	public static Encoder getLeftShooterEncoder() {
+		return leftShooterEncoder;
+	}
+	/**
+	 * @return the rightShooterEncoder
+	 */
+	public static Encoder getRightShooterEncoder() {
+		return rightShooterEncoder;
+	}
+	/**
+	 * @return the collectorUpLimit
+	 */
+	public static DigitalInput getCollectorUpLimit() {
+		return collectorUpLimit;
+	}
+	/**
+	 * @return the collectorDownLimit
+	 */
+	public static DigitalInput getCollectorDownLimit() {
+		return collectorDownLimit;
+	}
+	/**
+	 * @return the ballLimit
+	 */
+	public static boolean getBallLimit() {
+		return ballLimit.get();
+	}
+	/**
+	 * @return the shooterUpLimit
+	 */
+	public static DigitalInput getShooterUpLimit() {
+		return shooterUpLimit;
+	}
+	/**
+	 * @return the shooterDownLimit
+	 */
+	public static DigitalInput getShooterDownLimit() {
+		return shooterDownLimit;
+	}
+	/**
+	 * @return the navx
+	 */
+	public static AHRS getNavx() {
+		return navx;
+	}
+	/**
+	 * @return the driverStick
+	 */
+	public static Joystick getDriverStick() {
+		return driverStick;
+	}
+	/**
+	 * @return the operatorStick
+	 */
+	public static Joystick getOperatorStick() {
+		return operatorStick;
 	}
 	
-	public static void setFeeder(double feederSpeed){
-		double speed = feederSpeed;
-		//hard limits. We removed comment around Line 84 and 87.  Additionally changed this from true to false.  Why the speed < 0 Statement?
+	public static void initInputs() {
 		
-		if(Inputs.ballStop.get() == true && speed > 0){
-			speed = 0;
-		} 
-		
-		feeder.set(speed);
 	}
 	
-	public static void doCollector(double collectorSpeed){
-		double speed = collectorSpeed;
-		
-		//enable limits only if sensor is reading
-		if(Inputs.getCollectorAngle() > 0.8){	
-			//lower collector limit
-			if(Inputs.getCollectorAngle() > 2.01 && speed > 0){
-				speed = 0;
-			}
-			//upper collector limit
-			if(speed < 0){
-				if(Inputs.getCollectorAngle() < 1.145){
-					speed = 0;
-				}
-			}	
-		}
-		
-		if(Inputs.limitUpCollector.get() == false && collectorSpeed < 0){
-			collectorSpeed = 0;
-		}
-		
-		if(Inputs.limitDownCollecor.get() == false && collectorSpeed > 0){
-			collectorSpeed = 0;
-		}
-				
-		collector.set(speed);
-	}
-	
-	//move shooter arm
-	public static void doShooter(double shooterArmSpeed){
-		double speed = shooterArmSpeed;
-		
-		if(Inputs.limitUpShooter.get() == false && speed < 0){
-			speed = 0;
-		}
-		
-		if(Inputs.limitDownShooter.get() == false && speed > 0){
-			speed = 0;
-		}
-		
-		//shooter arm lower limit
-		if(Inputs.getShooterAngle() > 1.29 && speed > 0){
-			speed = 0;
-		} else if(Inputs.getShooterAngle() > 0.95 && speed > 0){
-			speed = speed * 0.5;
-		}
-		
-		//shooter arm upper limit
-		if(Inputs.getShooterAngle() < 0.2 && speed < 0){
-			speed = 0;
-		}
-		
-		shooterArm.set(speed);
-	}
-	
-	public static void resetGyro(){
-		navx.zeroYaw();
-	}
-
 }

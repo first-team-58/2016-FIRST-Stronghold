@@ -1,246 +1,226 @@
+/*
+ * Auto.java
+ * 
+ * This class stores all the autonomous functions of the robot
+ */
 package org.usfirst.frc.team58.robot;
 
-import edu.wpi.first.wpilibj.PIDController;
-import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.networktables.NetworkTable;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class Auto {
+public class Auto 
+{
+ private static Timer timer = new Timer(); //Creates a timer
+ public static double timeFlag; //Stores the time
 
-	private static Timer timer = new Timer();
-	
-	public static boolean startedTarget = false;
-
-	public static double gyroTarget = 0;
-	private static double initGyro;
-
-	// program variable
-	public static boolean porkulusRunning = false;
-	public static boolean programRunning = false;
-	public static double timeFlag;
-	public static double programStage = 0;
-
-	public static boolean ready = false;
-
-	public static int targetStage = 0;
-	private static boolean shootBegun = false;
-	public static boolean targeting = false;
-
-	public static double errorConstant = -0.2;
-
-	public static void init() {
-		timer.start();
-		initGyro = Inputs.getAngle();
+ public static double errorConstant = -0.2; //Used to correct steering when attempting to drive straight
+ public static double initGyro; //Stores the initial direction of the robot
+ 
+ private static int program; //Variable that stores which autonomous program to run
+ 
+ public static void initAuto()
+ {
+  initGyro = Inputs.getNavx().getAngle(); //Save the start angle of the robot so it can drive straight
+  program = Dashboard.getAutoProgram(); //Get the autonomous program to run from the dashboard
+ }
+ 
+ public static void run()//select auto functionality
+  {
+   // switch through auto program selections
+   switch (program) 
+    {
+	 case 0:
+		nothing();
+		break;
+	 case 1:
+		reset();
+		break;
+	 case 2:
+		lowBar();
+		break;
+	 case 3:
+		defenseTouch();
+		break;
+	 case 4:
+		defenseStraight();
+		break;
+	 case 5:
+		portcullis();
+		break;
+	 case 6:
+		chevalDeFrise();
+		break;
+	 default:
+		nothing();
+		break;
 	}
-
-	public static void run(int program) {
-		// switch through auto program selections
-		switch (program) {
-		case 0:
-			nothing();
-			break;
-		case 1:
-			reset();
-			break;
-		case 2:
-			lowBar();
-			break;
-		case 3:
-			defenseTouch();
-			break;
-		case 4:
-			defenseStraight();
-			break;
-		case 5:
-			portcullus();
-			break;
-		case 6:
-			chevalDeFrise();
-			break;
-		default:
-			nothing();
-			break;
-		}
+ }
+ 
+ public static void nothing()// zero all motors
+  {		
+   Drive.getDrive().arcadeDrive(0, 0);
+   Outputs.setShooterWheels(0);
+   Outputs.setCollectorArm(0);
+   Outputs.setFeederWheels(1);
+  }
+ public static void reset()
+  {
+   Outputs.setShooterSafety(false);//Allows arm to ignore software limits for angle
+   
+   //set shooter to upper limit
+   if (Inputs.getShooterUpLimit().get()) // upper shooter limit not triggered	
+    { 									
+	 Outputs.setShooterArm(-0.45); //raise until upper shooter limit triggered
+	} 
+   else // upper shooter limit triggered
+    { 
+	 Outputs.setShooterArm(0);// stop shooter
+	 if (Inputs.getCollectorAngle() > 1.15) // collector outside of frame
+	  {
+	   Outputs.setCollectorArm(-0.5);// raise collector
+	   timeFlag = timer.get();
+	  } 
+	 else if (timer.get() - timeFlag < 1) // past limit but less than 1/2 seconds passed
+	  { 
+	   Outputs.setCollectorArm(-0.25); // raise
+	  } 
+	 else // limit reached
+	  { 
+	   Outputs.setCollectorArm(0); // stop
+	  }
+	 }
+  Outputs.setShooterSafety(true);//re-enable safety
+ } 
+ public static void lowBar()
+  {
+   if (Inputs.getShooterDownLimit().get()|| Inputs.getShooterAngle() < 0.77) //if limit switch has been hit or the shooter is above target angle, drive down
+    {
+	 Outputs.setShooterArm(0.18);//drive down
 	}
-
-	public static void target(){
-		if(startedTarget == false){
-			Robot.initPID();
-			startedTarget = true;
-		}
+   else 
+    {
+	 Outputs.setShooterArm(0);//stop driving
+	}
+   
+   if (Inputs.getCollectorAngle() < 1.75) // check collector angle, lower it to below frame
+    {
+	Outputs.setCollectorArm(0.5);//drive down
+	} 
+   else 
+    {
+	 Outputs.setCollectorArm(0);//stop driving
+			
+	 if (timer.get() < 8) // if the timer is less than 8 sec, drive forwards in a straight line
+	  {
+	   double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);
+	   Drive.getDrive().arcadeDrive(0.75, delta * errorConstant);
+	  }
+	 else 
+	  {
+	   shoot();
+	  }
+	}
+   
+   //*Alec, No idea what this code does*
+   if (!Inputs.getCollectorDownLimit().get())
+    {
+	 Outputs.setCollectorArm(0);
+	}
+   //*End no idea*
+  }
+ public static void shoot()
+  {	
+   timeFlag = timer.get();	
+ 
+   Outputs.setShooterWheels(1);// spin shooter wheels
 		
-		//run the controller and update
-		Robot.runPID();
-		
-		//check if on target
-		if(ready == true){
-			//fire
-			Mechanisms.feederSpeed = -0.5;
-		}
-		
-		//raise shooter arm
-		if(Inputs.getShooterAngle()  > 0.41){
-			Mechanisms.shooterArmSpeed = -0.5;
-		} else {
-			Mechanisms.shooterArmSpeed = 0;
-		}
-		
-		//spin wheels
-		//Mechanisms.wheelSpeed = -0.5;
-		
+   if (Inputs.getShooterAngle() > 0.41) 
+    {
+	 Outputs.setShooterArm(-0.5);// raise until upper shooter limit triggered
+	} 
+   else 
+    {
+	 Outputs.setShooterArm(0.5);//else run down
 	}
-	
-	// stage arms in up positions for match start
-	public static void reset() {
-		// shooter to upper limit
-		if (Inputs.limitUpShooter.get() == true) { // upper shooter limit not
-													// triggered
-			// raise until upper shooter limit triggered
-			Inputs.doShooter(-0.45);
-		} else { // upper shooter limit triggered
-			// stop shooter
-			Inputs.doShooter(0);
-			// collector outside of frame
-			if (Inputs.getCollectorAngle() > 1.15) {
-				// raise collector
-				Inputs.doCollector(-0.5);
-				timeFlag = timer.get();
-			} else if (timer.get() - timeFlag < 1) { // past limit but less than
-														// 1/2 seconds passed
-				Inputs.doCollector(-0.25); // raise
-			} else { // limit reached
-				Inputs.doCollector(0); // stop
-			}
-
-		}
-
+   
+   do 
+    {
+	 //nothing
+    } while(timer.get() - timeFlag < 1);
+   
+   Outputs.setFeederWheels(1); //suck balls into feeder
+  }
+ public static void defenseTouch()//poke the defense
+  {
+   if (timer.get() < 1.2) //if the timer hasnt elapses 1.2 seconds
+    {
+	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);//drive straight
+	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant);//keep going straight
+	} 
+   else //1.2 seconds has passed
+    {
+	 Drive.getDrive().arcadeDrive(0,0);//STOP
 	}
-
-	public static void chevalDeFrise() {
-		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(0.75, delta * errorConstant);
-		} else if (Inputs.limitDownCollecor.get() == true) {
-			Inputs.doCollector(0.75);
-		} else if (timer.get() < 8 || Inputs.limitUpCollector.get() == true) {
-			Inputs.doCollector(-0.75);
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(0.75, delta * errorConstant);
-		} else {
-			Inputs.doCollector(0);
-			shoot();
-		}
+  }
+ public static void defenseStraight()//sick wheelie
+  {
+   double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);//drive straight
+   if (timer.get() < 1.2)//if less than 1.2 seconds elapses 
+    {
+     Drive.getDrive().arcadeDrive(0.75, delta * errorConstant);//drive
+	} 
+   else if (timer.get() < 1.6) //if less than 1.6 seconds elapses 
+    {
+	 Drive.getDrive().arcadeDrive(-1, 0);//back up
+	} 
+   else if (timer.get() < 3.5) //if less than 3.5 seconds elapses 
+    {
+	 Drive.getDrive().arcadeDrive(1, 0.3);//full foward
 	}
-
-	// go through low bar, turn right and shoot
-	public static void lowBar() {
-
-		if (Inputs.limitDownShooter.get() == true || Inputs.getShooterAngle() < 0.77) {
-			Inputs.doShooter(0.18);
-		} else {
-			Inputs.doShooter(0);
-		}
-
-		// check collector angle, lower it to below frame
-		if (Inputs.getCollectorAngle() < 1.75) {
-			Inputs.doCollector(0.5);
-		} else {
-			Inputs.doCollector(0);
-			// if the timer is less than 8 sec, drive forwards in a straight
-			// line
-			if (timer.get() < 8) {
-				double delta = Math.abs(Inputs.getAngle() - initGyro);
-				Drive.drive(0.75, delta * errorConstant);
-			} else {
-				shoot();
-			}
-
-		}
-
-		if (Inputs.limitDownCollecor.get() == false) {
-			Inputs.doCollector(0);
-		}
-
+   //*Alec code supposed to go here?*
+   // shoot
+  }
+ public static void portcullis()
+  {
+   Outputs.setCollectorSafety(false);//remove collector angle limitations
+   if (timer.get() < 1.2) //if less than 1.2 seconds elapses 
+    {
+	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);
+	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant);//drive forward
 	}
-
-	public static void defenseTouch() {
-		// wheelie
-		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(0.75, delta * errorConstant);
-		} else {
-			Drive.drive(0, 0);
-		}
-
+   else if (timer.get() < 4.4) //if less than 4.4 seconds elapses 
+    {
+	 Drive.getDrive().arcadeDrive(0.4, 0);//drive forward slowly
+	 Outputs.setCollectorArm(-0.7);//raise portcullis
+	} 
+   else //otherwise...
+    {
+	 Drive.getDrive().arcadeDrive(0, 0);//stop
+	 Outputs.setCollectorArm(0);//stop moving arm
+    }
+   Outputs.setCollectorSafety(true);//re-set safeties
+  }
+ 
+ public static void chevalDeFrise()
+  {
+   if (timer.get() < 1.2) //if less than 1.2 seconds elapses
+	{
+	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro); 
+	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant); //drive forward
+	} 
+   else if (Inputs.getCollectorDownLimit().get()) //else if the collector has hit the hard reset
+	{
+	 Outputs.setCollectorArm(0.75); //drive arm up
+	} 
+   else if (timer.get() < 8 || Inputs.getCollectorUpLimit().get()) //if less than 8 seconds elapses or the collector has hit the hard reset
+	{
+	 Outputs.setCollectorArm(-0.75); //drive arm down
+	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro); 
+	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant); //drive forward
+    }
+   else 
+	{
+	 Outputs.setCollectorArm(0); //stop collector arm
+	 shoot(); //run shoot code
 	}
-
-	public static void defenseStraight() {
-		// wheelie
-		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(0.75, delta * errorConstant);
-		} else if (timer.get() < 1.6) {
-			Drive.drive(-1, 0);
-		} else if (timer.get() < 3.5) {
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(1, 0.3);
-		}
-		// shoot
-	}
-
-	public static void shoot() {
-		
-		timeFlag = timer.get();
-		
-		// spin shooter wheels
-		Mechanisms.setWheels(1);
-		
-		if (Inputs.getShooterAngle() > 0.41) {
-			// raise until upper shooter limit triggered
-			Inputs.doShooter(-0.5);
-		} else {
-			Inputs.doShooter(0.5);
-		}
-
-		do {
-		} while(timer.get() - timeFlag < 1);
-		Inputs.setFeeder(1);
-	}
-	
-	public static void portcullus() {
-
-		if (timer.get() < 1.2) {
-			double delta = Math.abs(Inputs.getAngle() - initGyro);
-			Drive.drive(0.75, delta * errorConstant);
-		} else if (timer.get() < 4.4) {
-			Drive.drive(0.4, 0);
-			Inputs.doCollector(-0.7);
-		} else {
-			Drive.drive(0, 0);
-			Inputs.doCollector(0);
-		}
-
-	}
-
-	public static void nothing() {
-		// zero all motors
-		Drive.drive(0, 0);
-		Inputs.doShooter(0);
-		Inputs.doCollector(0);
-		Inputs.setFeeder(1);
-	}
-
-	
+ } 
 }
-
-/*
- * if(Inputs.gyro.getAngle() > gyroTarget + 0.6){ //left fast
- * Mechanisms.rotateSpeed = 0.6; } else if(Inputs.gyro.getAngle() > gyroTarget +
- * 0.4){ //left slow Mechanisms.rotateSpeed = 0.3; } else
- * if(Inputs.gyro.getAngle() < gyroTarget - 0.6){ //right fast
- * Mechanisms.rotateSpeed = -0.6; } else if(Inputs.gyro.getAngle() < gyroTarget
- * - 0.4){ //right slow Mechanisms.rotateSpeed = -0.3; } else { //stop
- * Mechanisms.rotateSpeed = 0; timeFlag = timer.get(); targetStage = 2; }
- */
-
