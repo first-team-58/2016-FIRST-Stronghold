@@ -4,8 +4,7 @@ package org.usfirst.frc.team58.robot;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class Robot extends IterativeRobot {
-    
+public class Robot extends IterativeRobot {  
 
     public void robotInit() {
         new Outputs();
@@ -29,9 +28,12 @@ public class Robot extends IterativeRobot {
     
     public void teleopPeriodic() {
         Drive.doDrive();//Run drive loop
-        //System.out.println(Targeting.getController().getEnabled());
-        //System.out.println(Outputs.getLeftDrive().get());
         Operate.doOperate();//Run operate loop
+        
+        System.out.println("shooter" + Inputs.getShooterAngle());
+        System.out.println("collector" + Inputs.getCollectorAngle());
+        
+        System.out.println("collector" + Inputs.getNavx().getYaw());
     }
 
     public void testPeriodic() {

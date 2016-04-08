@@ -100,7 +100,7 @@ public class Outputs {
 			//Do nothing, it is trying to go out of bounds, hard stop
 			shooterArm.set(0);
 			return;
-		} 
+		}
 		
 		if(shooterSoftLimit && Inputs.getShooterAngle() > shooterUpVoltage && speed > 0) {
 			//Do nothing, it is trying to go out of bounds, unless the soft stop is disabled
@@ -169,6 +169,8 @@ public class Outputs {
 		leftShooter.set(speed);
 		rightShooter.set(speed);
 		
+		/*
+		
 		//only enable corrections above a certain rpm
 		if(Math.abs(Inputs.getLeftShooterEncoder().getRate()) > 20000 && Math.abs(Inputs.getRightShooterEncoder().getRate()) > 20000){
 			// RAISE SPEED TO COMPENSATE
@@ -190,6 +192,12 @@ public class Outputs {
 				}
 			}
 		}
+		
+		//System.out.println("left" + Inputs.getLeftShooterEncoder().getRate());
+
+		//System.out.println("right" + rightShooter.get());
+		 
+		 */
 	}
 	
 	/*

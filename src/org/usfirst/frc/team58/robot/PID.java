@@ -189,8 +189,6 @@ public class PID {
 				output = 0;
 			}
 			
-			System.out.println("now");
-			
 			drive.arcadeDrive(0, output);
 		}
 	}

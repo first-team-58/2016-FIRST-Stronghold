@@ -40,6 +40,10 @@ public class Operate {
 		
 		// Set collector arm to collection setpoint
 		if(Inputs.getOperatorStick().getRawButton(2)) {
+			//move shooter arm to lower limit
+			Outputs.setShooterArm(0.4);
+			
+			//move collector to 90 degree collection position
 			if(Inputs.getCollectorAngle() > collectorAngleUpperVoltageTarget &&
 					Inputs.getCollectorAngle() < collectorAngleLowerVoltageTarget) {
 				//Stop running the collector arm
@@ -62,7 +66,7 @@ public class Operate {
 		if(Inputs.getOperatorStick().getRawButton(1)) {
 			Outputs.setIntakeWheels(-1);
 			Outputs.setFeederWheels(.5); //Need a way to set this to zero  if nothing is running it
-			Outputs.setShooterWheels(.35); //Ditto
+			Outputs.setShooterWheels(.45); //Ditto
 		} else {
 			Outputs.setIntakeWheels(0);
 			if(!shooterInUse){
@@ -88,16 +92,24 @@ public class Operate {
 			Targeting.stopTargeting(); //stop running the targeting code
 		 startedTargeting = false;	//dont run the targeting code
 		}
+		
 		//*Alec, the aimShooter function does something, but I dont think its correct
 		// Aim the shooter if the "RT" trigger is pulled
-		if(Inputs.getOperatorStick().getThrottle() > 0) {
-			
+		if(Inputs.getOperatorStick().getRawButton(8)) {
+			//raise shooter to correct height (0.3V)
+			if(Inputs.getShooterAngle() > 0.29){ //shooter above setpoint
+				Outputs.setShooterArm(-0.7); //lower shooter
+			} else { //shooter within deadband
+				Outputs.setShooterArm(0); //stop shooter
+			}
 		}
 		
+		/*
 		// Disable the shooter aim if it waits too long to set to the shoot point
 		if(Inputs.getOperatorStick().getTwist() > 0) {
 			shooterPID.disablePID();
 		}
+		*/
 				
 		// Override run shooter wheels
 		if(Inputs.getOperatorStick().getRawButton(5)) {
