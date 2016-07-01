@@ -128,7 +128,7 @@ public class Inputs {
 	}
 	
 	public static void initInputs() {
-		
+		Inputs.getNavx().reset();
 	}
 	
 }

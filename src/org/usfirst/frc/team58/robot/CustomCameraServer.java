@@ -227,8 +227,8 @@ public class CustomCameraServer {
                     setImage(frame);
                 }
             } catch (VisionException ex) {
-                DriverStation.reportError("Error when getting image from the camera: " + ex.getMessage(),
-                        true);
+                //DriverStation.reportError("Error when getting image from the camera: " + ex.getMessage(),
+                    //    true);
                 if (dataBuffer != null) {
                     synchronized (this) {
                         m_imageDataPool.addLast(dataBuffer);
@@ -367,7 +367,7 @@ public class CustomCameraServer {
                             Thread.sleep(period - dt);
                         }
                     } catch (IOException | UnsupportedOperationException ex) {
-                        DriverStation.reportError(ex.getMessage(), true);
+                        //DriverStation.reportError(ex.getMessage(), true);
                         break;
                     } finally {
                         imageData.data.free();
@@ -379,7 +379,7 @@ public class CustomCameraServer {
                     }
                 }
             } catch (IOException ex) {
-                DriverStation.reportError(ex.getMessage(), true);
+                //DriverStation.reportError(ex.getMessage(), true);
                 continue;
             }
         }

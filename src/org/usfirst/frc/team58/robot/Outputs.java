@@ -55,7 +55,7 @@ public class Outputs {
 	
 	// Collector arm software limit voltages
 	private static double collectorUpVoltage = 1.145;
-	private static double collectorDownVoltage = 2.01;
+	private static double collectorDownVoltage = 1.9;
 	
 	//Misc variables
 	private static boolean rev;

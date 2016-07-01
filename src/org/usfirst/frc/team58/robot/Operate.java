@@ -11,10 +11,11 @@ public class Operate {
 	private static PID shooterPID; //sets up a pid loop for the shooter
 	private static PID collectorPID; //sets up a pid loop for the collector
 	private static double collectorAngleUpperVoltageTarget = 1.55; //voltage target for upper collector angle
-	private static double collectorAngleLowerVoltageTarget = 1.65; //voltage target for lower collector angle
+	private static double collectorAngleLowerVoltageTarget = 1.65; //Was 1.65. voltage target for lower collector angle
     private static boolean startedTargeting = false; //boolean to store if targeting is running
     private static boolean shooterInUse = false;
     private static boolean feederInUse = false;
+    private static boolean shooterArmInUse = false;
     
 	public static void initOperate() {
 	     //make sure motor safety is enabled in case auto does not finish
@@ -40,20 +41,24 @@ public class Operate {
 		
 		// Set collector arm to collection setpoint
 		if(Inputs.getOperatorStick().getRawButton(2)) {
+			shooterArmInUse = true;
 			//move shooter arm to lower limit
 			Outputs.setShooterArm(0.4);
-			
 			//move collector to 90 degree collection position
 			if(Inputs.getCollectorAngle() > collectorAngleUpperVoltageTarget &&
 					Inputs.getCollectorAngle() < collectorAngleLowerVoltageTarget) {
 				//Stop running the collector arm
+				
 				Outputs.setCollectorArm(0);
 			} else if (Inputs.getCollectorAngle() <= collectorAngleUpperVoltageTarget) {
 				Outputs.setCollectorArm(.5);
 			} else {
+				
 				Outputs.setCollectorArm(-.5);
 			}
-		}	
+		} else {
+			shooterArmInUse = false;
+		}
 	}
 	
 	private static void runShooter() {
@@ -97,9 +102,11 @@ public class Operate {
 		// Aim the shooter if the "RT" trigger is pulled
 		if(Inputs.getOperatorStick().getRawButton(8)) {
 			//raise shooter to correct height (0.3V)
-			if(Inputs.getShooterAngle() > 0.29){ //shooter above setpoint
-				Outputs.setShooterArm(-0.7); //lower shooter
+			if(Inputs.getShooterAngle() > 0.55){ //shooter above setpoint
+				shooterArmInUse = true;
+				Outputs.setShooterArm(-0.5); //lower shooter
 			} else { //shooter within deadband
+				shooterArmInUse = false;
 				Outputs.setShooterArm(0); //stop shooter
 			}
 		}
@@ -139,7 +146,9 @@ public class Operate {
 			if(Math.abs(armSpeed) < .1) {
 				armSpeed = 0;
 			}
-			Outputs.setShooterArm(armSpeed);
+			if(!shooterArmInUse){
+				Outputs.setShooterArm(armSpeed);
+			}
 		}
 		
 		

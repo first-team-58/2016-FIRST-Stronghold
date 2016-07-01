@@ -6,6 +6,7 @@
 
 package org.usfirst.frc.team58.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotDrive;
 
 public class Drive {
@@ -39,7 +40,9 @@ public class Drive {
 			if(Math.abs(rotate) < .1) { //Sets a deadband on the controller for turning
 				rotate = 0;
 			}
-			System.out.println("rotate: " + rotate + "move" + move);
+			DriverStation.reportError("YAW!: " + Inputs.getNavx().getYaw() + "pitch: " + Inputs.getNavx().getPitch() + "roll: " + Inputs.getNavx().getRoll(),false);
+			System.out.println("YAW!: " + Inputs.getNavx().getYaw() + "pitch: " + Inputs.getNavx().getPitch() + "roll: " + Inputs.getNavx().getRoll());
+			  
 			drive.arcadeDrive(move, rotate); //Tells the drive train to drive the motors
 		}
 	}

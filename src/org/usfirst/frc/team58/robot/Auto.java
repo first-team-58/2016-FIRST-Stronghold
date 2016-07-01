@@ -19,8 +19,10 @@ public class Auto
  
  public static void initAuto()
  {
+	 
 	 timer.start();
-  initGyro = Inputs.getNavx().getAngle(); //Save the start angle of the robot so it can drive straight
+	 Inputs.getNavx().reset();
+  initGyro = Inputs.getNavx().getYaw(); //Save the start angle of the robot so it can drive straight
   program = Dashboard.getAutoProgram(); //Get the autonomous program to run from the dashboard
  }
  
@@ -104,7 +106,7 @@ public class Auto
 	 Outputs.setShooterArm(0);//stop driving
 	}
    
-   if (Inputs.getCollectorAngle() < 1.75) // check collector angle, lower it to below frame
+   if (Inputs.getCollectorAngle() < 1.8) // check collector angle, lower it to below frame
     {
 	Outputs.setCollectorArm(0.5);//drive down
 	} 
@@ -113,9 +115,9 @@ public class Auto
 	 Outputs.setCollectorArm(0);//stop driving
 	}
    
-   if (timer.get() < 8 && timer.get() > 4) // if the timer is less than 8 sec, drive forwards in a straight line
+   if (timer.get() < 9 && timer.get() > 4) // if the timer is less than 8 sec, drive forwards in a straight line
    {
-	  double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);
+	  double delta = Math.abs(Inputs.getNavx().getYaw() - initGyro);
 	  Drive.getDrive().arcadeDrive(-0.75, delta * errorConstant);
    }
    
@@ -154,8 +156,8 @@ public class Auto
   {
    if (timer.get() < 1.2) //if the timer hasnt elapses 1.2 seconds
     {
-	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);//drive straight
-	 Drive.getDrive().arcadeDrive(-0.75, delta * errorConstant);//keep going straight
+	 double delta = Math.abs(Inputs.getNavx().getYaw() - initGyro);//drive straight
+	 Drive.getDrive().arcadeDrive(-0.75, 0);//keep going straight
 	} 
    else //1.2 seconds has passed
     {
@@ -166,8 +168,8 @@ public class Auto
  
  public static void defenseStraight()//sick wheelie
   {
-   double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);//drive straight
-   if (timer.get() < 1.2)//if less than 1.2 seconds elapses 
+   double delta = Inputs.getNavx().getYaw() - initGyro;//drive straight
+   if (timer.get() < 1.2)//if less than 1.2 seconds elapses
     {
      Drive.getDrive().arcadeDrive(-0.75, delta * errorConstant);//drive
 	} 
@@ -175,12 +177,12 @@ public class Auto
     {
 	 Drive.getDrive().arcadeDrive(1, 0);//back up
 	} 
-   else if (timer.get() < 3.5) //if less than 3.5 seconds elapses 
+   else if (timer.get() < 5.5) //if less than 3.5 seconds elapses 
     {
-	 Drive.getDrive().arcadeDrive(-1, 0.3);//full foward
+	 Drive.getDrive().arcadeDrive(-1, delta * errorConstant);//full foward
 	}
-   //*Alec code supposed to go here?*
-   // shoot
+   System.out.println("Delta: " + delta);
+   System.out.println("YAW!: " + Inputs.getNavx().getYaw() + "pitch: " + Inputs.getNavx().getPitch() + "roll: " + Inputs.getNavx().getRoll());
   }
  
  
@@ -189,7 +191,7 @@ public class Auto
    Outputs.setCollectorSafety(false);//remove collector angle limitations
    if (timer.get() < 1.2) //if less than 1.2 seconds elapses 
     {
-	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro);
+	 double delta = Math.abs(Inputs.getNavx().getYaw() - initGyro);
 	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant);//drive forward
 	}
    else if (timer.get() < 4.4) //if less than 4.4 seconds elapses 
@@ -209,7 +211,7 @@ public class Auto
   {
    if (timer.get() < 1.2) //if less than 1.2 seconds elapses
 	{
-	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro); 
+	 double delta = Math.abs(Inputs.getNavx().getYaw() - initGyro); 
 	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant); //drive forward
 	} 
    else if (Inputs.getCollectorDownLimit().get()) //else if the collector has hit the hard reset
@@ -219,7 +221,7 @@ public class Auto
    else if (timer.get() < 8 || Inputs.getCollectorUpLimit().get()) //if less than 8 seconds elapses or the collector has hit the hard reset
 	{
 	 Outputs.setCollectorArm(-0.75); //drive arm down
-	 double delta = Math.abs(Inputs.getNavx().getAngle() - initGyro); 
+	 double delta = Math.abs(Inputs.getNavx().getYaw() - initGyro); 
 	 Drive.getDrive().arcadeDrive(0.75, delta * errorConstant); //drive forward
     }
    else 

@@ -10,7 +10,7 @@ public class Robot extends IterativeRobot {
         new Outputs();
     	Outputs.initOutputs(); //Initialize motor outputs
         Dashboard.initDashboard(); //Initialize dashboard
-        Inputs.initInputs(); //Initialize inputs
+        Inputs.initInputs(); //Initialize input
     }
 
     public void autonomousInit() {
@@ -30,10 +30,21 @@ public class Robot extends IterativeRobot {
         Drive.doDrive();//Run drive loop
         Operate.doOperate();//Run operate loop
         
+        System.out.println("enc r" + Inputs.getRightShooterEncoder().getRate());
+        System.out.println("enc L" + Inputs.getLeftShooterEncoder().getRate());
+        
         System.out.println("shooter" + Inputs.getShooterAngle());
         System.out.println("collector" + Inputs.getCollectorAngle());
         
         System.out.println("collector" + Inputs.getNavx().getYaw());
+        
+        SmartDashboard.putNumber("ARM ANGLE", Inputs.getShooterAngle());
+        
+        SmartDashboard.putNumber("col", Inputs.getCollectorAngle());
+        
+        SmartDashboard.putNumber("Yaw", Inputs.getNavx().getYaw());
+        SmartDashboard.putNumber("Pitch", Inputs.getNavx().getPitch());
+        SmartDashboard.putNumber("Roll", Inputs.getNavx().getRoll());
     }
 
     public void testPeriodic() {
